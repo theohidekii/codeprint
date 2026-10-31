@@ -14,18 +14,19 @@ The theme that ties it together is **the fingerprint of code**. The name and the
 
 One web app with four tools. They share a design system, layout and code conventions:
 
-| # | Tool | One line |
-|---|------|----------|
-| 1 | **Trace** (source finder) | Paste a snippet and Codeprint finds public repositories containing the same code, even when identifiers were renamed, ranked by similarity. **Flagship.** |
-| 2 | **Snapshot** (code as visual) | Paste a snippet and get a polished, shareable image: themes, frames, annotations, export to PNG/SVG. |
-| 3 | **Fingerprint** (generative art) | Enter a GitHub user or repo and get a unique generative poster from its languages, commit rhythm, active hours and file sizes. Downloadable. |
-| 4 | **Blueprint** (architecture plan) | Enter a GitHub repo and get its module and dependency structure drawn as a technical blueprint (blue paper, drafting lines, hotspots). |
+| #   | Tool                              | One line                                                                                                                                                  |
+| --- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Trace** (source finder)         | Paste a snippet and Codeprint finds public repositories containing the same code, even when identifiers were renamed, ranked by similarity. **Flagship.** |
+| 2   | **Snapshot** (code as visual)     | Paste a snippet and get a polished, shareable image: themes, frames, annotations, export to PNG/SVG.                                                      |
+| 3   | **Fingerprint** (generative art)  | Enter a GitHub user or repo and get a unique generative poster from its languages, commit rhythm, active hours and file sizes. Downloadable.              |
+| 4   | **Blueprint** (architecture plan) | Enter a GitHub repo and get its module and dependency structure drawn as a technical blueprint (blue paper, drafting lines, hotspots).                    |
 
 The tool names are the builder's call and can change.
 
 ## 3. Goals, non-goals, anti-goals
 
 **Goals**
+
 - An extremely well-crafted UI with a distinctive identity, micro-interactions, motion, and polished empty, loading and error states. Responsive and accessible (WCAG AA).
 - Built with strict TDD: every behavior starts as a failing test.
 - Clean, organized, professional code with pure domain logic separated from UI and I/O.
@@ -34,16 +35,18 @@ The tool names are the builder's call and can change.
 - Runs locally with `pnpm install && pnpm dev`. **Not deployed** (owner's decision). The post links to the repository and shows a recorded demo.
 
 **Non-goals**
+
 - User accounts, persistence, history, payments.
 - Searching private code.
-- A legal-grade plagiarism verdict. Trace says *where similar code exists*, not *who is guilty*.
+- A legal-grade plagiarism verdict. Trace says _where similar code exists_, not _who is guilty_.
 - Running a code index of our own. Trace relies on public search providers.
 
 **Anti-goals (failure even if it "works")**
+
 - Looks like a default shadcn/template dashboard.
 - Tests written after the code, or coverage-padding tests that assert nothing.
 - Leaking API tokens to the browser.
-- Results that look confident while being noise. Trace must show *why* something matched.
+- Results that look confident while being noise. Trace must show _why_ something matched.
 
 ## 4. Build order
 
@@ -59,18 +62,18 @@ Each phase after Foundation gets its own short design pass and plan when it star
 
 ## 5. Tech stack (builder's call, approved in principle by owner)
 
-| Concern | Choice |
-|---------|--------|
-| Framework | Next.js (App Router), React, TypeScript `strict` |
-| Package manager | pnpm (enable with `corepack enable`) |
-| Styling | Tailwind CSS, shadcn/ui primitives (restyled heavily), Framer Motion |
-| Validation | Zod at every boundary (API input, provider responses, env) |
-| Unit and component tests | Vitest + Testing Library |
-| HTTP mocking | MSW. Tests never hit the network. |
-| E2E | Playwright |
-| Lint and format | ESLint + Prettier, enforced in CI |
-| CI | GitHub Actions: lint, typecheck, unit, e2e, build |
-| Commits | Conventional Commits |
+| Concern                  | Choice                                                               |
+| ------------------------ | -------------------------------------------------------------------- |
+| Framework                | Next.js (App Router), React, TypeScript `strict`                     |
+| Package manager          | pnpm (enable with `corepack enable`)                                 |
+| Styling                  | Tailwind CSS, shadcn/ui primitives (restyled heavily), Framer Motion |
+| Validation               | Zod at every boundary (API input, provider responses, env)           |
+| Unit and component tests | Vitest + Testing Library                                             |
+| HTTP mocking             | MSW. Tests never hit the network.                                    |
+| E2E                      | Playwright                                                           |
+| Lint and format          | ESLint + Prettier, enforced in CI                                    |
+| CI                       | GitHub Actions: lint, typecheck, unit, e2e, build                    |
+| Commits                  | Conventional Commits                                                 |
 
 ## 6. Architecture
 
@@ -99,6 +102,7 @@ tests/e2e/                # Playwright
 ```
 
 Rules:
+
 - `domain/` never imports from `ui/`, `providers/`, `app/` or Next.js.
 - Providers implement one interface, so they can be swapped and mocked.
 - Route handlers stay thin: validate input, call a use case, map to a response.
@@ -106,6 +110,7 @@ Rules:
 ## 7. Trace: how it works
 
 ### 7.1 User flow
+
 1. User pastes a snippet (language auto-detected, overridable).
 2. Codeprint shows the snippet's "fingerprint" forming (animated) while searching.
 3. Results stream in as cards: repo, file path, link to the exact lines, stars, and a **similarity score**.
@@ -113,13 +118,14 @@ Rules:
 5. Clear states for: snippet too short to be meaningful, no matches, provider rate-limited or down (partial results still shown).
 
 ### 7.2 Matching pipeline (pure domain logic)
+
 1. **Tokenize** the snippet with a lightweight lexer that knows comments, strings, numbers, identifiers, keywords and operators for popular languages (JS/TS, Python, Java, C/C++, C#, Go, Rust, PHP, Ruby). Unknown languages fall back to a generic C-like lexer.
 2. **Normalize**: drop comments and whitespace, then replace every non-keyword identifier with a placeholder (`ID`), and literals with `STR` and `NUM`. Two snippets that differ only by renaming become identical token streams.
-3. **Fingerprint** with *winnowing* (Schleimer, Wilkerson, Aiken 2003, the algorithm behind Stanford's MOSS): hash k-grams of normalized tokens and keep the minimum hash in each sliding window.
+3. **Fingerprint** with _winnowing_ (Schleimer, Wilkerson, Aiken 2003, the algorithm behind Stanford's MOSS): hash k-grams of normalized tokens and keep the minimum hash in each sliding window.
 4. **Build search queries.** Search engines match text, not normalized tokens, so renamed code needs smarter queries:
-   - *exact* query: a distinctive line or run taken verbatim.
-   - *structural* query: a regex where identifiers become `\w+` and literals stay or are loosened, run against providers that support regex.
-   - *anchor* queries: rare literal strings, API calls and member names that usually survive renaming.
+   - _exact_ query: a distinctive line or run taken verbatim.
+   - _structural_ query: a regex where identifiers become `\w+` and literals stay or are loosened, run against providers that support regex.
+   - _anchor_ queries: rare literal strings, API calls and member names that usually survive renaming.
 5. **Fetch candidates** from providers, then download each candidate file's content.
 6. **Score**: fingerprint the candidate file with the same pipeline. Similarity is the share of the snippet's fingerprints found in the candidate. Matching regions are mapped back to line ranges.
 7. **Rank and dedupe**: by similarity, then signals of originality (oldest commit or creation date, stars, not a fork). Forks and vendored copies (`node_modules`, `vendor/`) are grouped under their likely origin.
@@ -127,7 +133,9 @@ Rules:
 The thresholds (k, window size, minimum snippet length, score cut-off) are chosen by the builder, backed by fixture-driven tests, and documented in the README.
 
 ### 7.3 Providers
+
 Behind one `SearchProvider` interface:
+
 - **GitHub code search API**: needs a server-side token, which lives in an env var on the server and is never sent to the browser. Rate-limited.
 - **Sourcegraph** public search and/or **grep.app**: regex-capable, used for the structural queries.
 

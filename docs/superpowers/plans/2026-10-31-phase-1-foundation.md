@@ -65,10 +65,12 @@ Co-located unit tests: `*.test.ts(x)` next to the file under test.
 ### Task 1: Scaffold, strict TypeScript, lint and unit test runner
 
 **Files:**
+
 - Create: the Next.js scaffold, `.nvmrc`, `.prettierrc`, `eslint.config.mjs`, `vitest.config.ts`, `vitest.setup.ts`, `src/shared/lib/cn.ts`, `src/shared/lib/cn.test.ts`
 - Modify: `tsconfig.json`, `package.json`, `README.md` (keep the existing content), `.gitignore`
 
 **Interfaces:**
+
 - Produces: `cn(...inputs: ClassValue[]): string` (clsx + tailwind-merge). Scripts `dev`, `build`, `start`, `lint`, `typecheck` (`tsc --noEmit`), `test` (`vitest run`), `test:watch`, `test:e2e`, `format`, `format:check`.
 
 - [ ] **Step 1:** Scaffold in place: `pnpm dlx create-next-app@latest . --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-pnpm --no-turbopack`. Keep `README.md` and `docs/`. Delete the boilerplate page content and images.
@@ -94,9 +96,11 @@ it("drops falsy values", () => {
 ### Task 2: Environment validation
 
 **Files:**
+
 - Create: `src/env.ts`, `src/env.schema.ts`, `src/env.schema.test.ts`, `.env.example`
 
 **Interfaces:**
+
 - Produces: `parseEnv(source: Record<string, string | undefined>): Env` and `env: Env` (parsed from `process.env` at import, server-only). `Env = { NODE_ENV: "development" | "test" | "production"; GITHUB_TOKEN?: string }`. Phase 2 makes `GITHUB_TOKEN` matter, but it stays optional at the schema level so the app runs without it.
 
 - [ ] **Step 1: Write the failing tests:**
@@ -111,10 +115,12 @@ it("drops falsy values", () => {
 ### Task 3: Network mocking and E2E harness
 
 **Files:**
+
 - Create: `src/test/msw/server.ts`, `src/test/msw/handlers.ts`, `src/test/msw/server.test.ts`, `playwright.config.ts`, `tests/e2e/smoke.spec.ts`
 - Modify: `vitest.setup.ts`, `package.json`
 
 **Interfaces:**
+
 - Produces: `server` (msw/node `setupServer(...handlers)`), started in `vitest.setup.ts` with `onUnhandledRequest: "error"`, reset after each test and closed after all. `handlers: RequestHandler[]` (empty for now). Phase 2 adds to it.
 
 - [ ] **Step 1: Write the failing test** `server.test.ts`: register `http.get("https://api.example.test/ping", () => HttpResponse.json({ ok: true }))` with `server.use`, then `fetch` it and expect `{ ok: true }`. A second test asserts that fetching an unhandled URL rejects.
@@ -128,6 +134,7 @@ it("drops falsy values", () => {
 ### Task 4: Continuous integration
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1:** The workflow runs on `push` to `main` and on `pull_request`, on `ubuntu-latest` with Node from `.nvmrc`, using corepack pnpm with cache. Jobs: `quality` (format:check, lint, typecheck), `unit` (`pnpm test -- --coverage`, uploads the coverage artifact), `e2e` (installs Playwright Chromium with deps, runs `pnpm test:e2e`, uploads the report on failure). `e2e` needs `quality`.
@@ -137,6 +144,7 @@ it("drops falsy values", () => {
 ### Task 5: Visual direction checkpoint (owner gate)
 
 **Files:**
+
 - Create: `docs/design/direction-mockups/a.html`, `b.html`, `c.html`, `docs/design/visual-direction.md`
 
 This is a gate. Tasks 6–9 do not start until the owner picks a direction.
@@ -149,10 +157,12 @@ This is a gate. Tasks 6–9 do not start until the owner picks a direction.
 ### Task 6: Design tokens and theming
 
 **Files:**
+
 - Modify: `src/app/globals.css`, `src/app/layout.tsx`
 - Create: `src/shared/ui/theme-provider.tsx`, `src/shared/ui/theme-toggle.tsx`, `src/shared/ui/theme-toggle.test.tsx`, `tests/e2e/theme.spec.ts`
 
 **Interfaces:**
+
 - Consumes: the tokens from `docs/design/visual-direction.md`.
 - Produces: CSS variables `--color-*`, `--font-display`, `--font-mono` exposed as Tailwind v4 `@theme` tokens (`bg-background`, `text-muted`, `text-accent`, `font-display`, …). `<ThemeProvider>` wraps `next-themes` with `attribute="class"`, `defaultTheme="system"`, `enableSystem`. `<ThemeToggle />` cycles system → light → dark.
 
@@ -169,21 +179,30 @@ This is a gate. Tasks 6–9 do not start until the owner picks a direction.
 ### Task 7: Tool registry, shell, navigation and 404
 
 **Files:**
+
 - Create: `src/shared/lib/tools.ts`, `tools.test.ts`, `src/shared/ui/{button,card,badge,kbd,skip-link,site-header,site-footer,fingerprint-mark}.tsx`, `site-header.test.tsx`, `src/app/(tools)/[tool]/page.tsx`, `src/app/not-found.tsx`, `tests/e2e/navigation.spec.ts`
 - Modify: `src/app/layout.tsx`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
 export type ToolStatus = "available" | "coming-soon";
 export type ToolSlug = "trace" | "snapshot" | "fingerprint" | "blueprint";
-export interface Tool { slug: ToolSlug; name: string; tagline: string; description: string; status: ToolStatus; phase: 2 | 3 | 4 | 5 }
+export interface Tool {
+  slug: ToolSlug;
+  name: string;
+  tagline: string;
+  description: string;
+  status: ToolStatus;
+  phase: 2 | 3 | 4 | 5;
+}
 export const tools: readonly Tool[];
 export function getTool(slug: string): Tool | undefined;
 ```
 
-  The `[tool]` page uses `generateStaticParams` from `tools` and calls `notFound()` for unknown slugs. `Button` has variants `primary | secondary | ghost` and sizes `sm | md | lg` (shadcn base, restyled to the tokens).
+The `[tool]` page uses `generateStaticParams` from `tools` and calls `notFound()` for unknown slugs. `Button` has variants `primary | secondary | ghost` and sizes `sm | md | lg` (shadcn base, restyled to the tokens).
 
 - [ ] **Step 1: Write the failing tests** `tools.test.ts`:
   - `tools.map(t => t.slug)` equals `["trace", "snapshot", "fingerprint", "blueprint"]`, in that order (the spec's build order).
@@ -207,16 +226,19 @@ export function getTool(slug: string): Tool | undefined;
 ### Task 8: Landing page
 
 **Files:**
+
 - Create: `src/features/landing/ui/{hero,tool-grid,how-it-works}.tsx` with `*.test.tsx`, `tests/e2e/responsive.spec.ts`, `tests/e2e/motion.spec.ts`
 - Modify: `src/app/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `tools` and `Tool` (Task 7), the shared UI and the tokens.
 - Produces: `<Hero />`, `<ToolGrid tools={readonly Tool[]} />`, `<HowItWorks />`.
 
 The spec's "live Trace demo above the fold" needs Trace, so Phase 1 ships the static illustration and Phase 2 swaps in the live demo.
 
 Copy (exact):
+
 - Hero `h1`: **"The fingerprint of code."**
 - Hero subhead: **"Trace a snippet back to its source, even after the variables were renamed. Then turn code into something worth sharing."**
 - Primary CTA: **"Trace a snippet"** → `/trace`. Secondary CTA: **"View on GitHub"** → `https://github.com/theohidekii/codeprint`.
@@ -238,6 +260,7 @@ Copy (exact):
 ### Task 9: Documentation and phase wrap-up
 
 **Files:**
+
 - Create: `CONTRIBUTING.md`, `LICENSE` (MIT, `Copyright (c) 2026 Theo Hideki`), `docs/adr/0001-stack-and-architecture.md`
 - Modify: `README.md`
 
