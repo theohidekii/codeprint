@@ -41,32 +41,45 @@ export interface TraceDeps {
   timeoutMs?: number;
 }
 
-/** Runs `task` with its own abort signal, cutting it off after `ms` even if it ignores the signal. */
+/** How long a task may take to hand back partial results after being asked to stop. */
+const GRACE_MS = 250;
+
+/**
+ * Runs `task` with its own abort signal. After `ms` the signal aborts, and the task gets
+ * GRACE_MS to return what it already has (a search may have streamed some hits) before it is
+ * cut off. Aborting `parent` cuts it off at once.
+ */
 async function withTimeout<T>(
   parent: AbortSignal,
   ms: number,
   task: (signal: AbortSignal) => Promise<T>,
 ): Promise<T> {
   const controller = new AbortController();
-  const abort = () => controller.abort();
-  parent.addEventListener("abort", abort);
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let grace: ReturnType<typeof setTimeout> | undefined;
+  let onParentAbort: (() => void) | undefined;
   try {
     return await Promise.race([
       task(controller.signal),
       new Promise<never>((_, reject) => {
+        onParentAbort = () => {
+          controller.abort();
+          reject(new ProviderError("timeout", "request aborted"));
+        };
+        parent.addEventListener("abort", onParentAbort);
         timer = setTimeout(() => {
           controller.abort();
-          reject(new ProviderError("timeout", "request timed out"));
+          grace = setTimeout(
+            () => reject(new ProviderError("timeout", "request timed out")),
+            GRACE_MS,
+          );
         }, ms);
-        controller.signal.addEventListener("abort", () =>
-          reject(new ProviderError("timeout", "request aborted")),
-        );
       }),
     ]);
   } finally {
     clearTimeout(timer);
-    parent.removeEventListener("abort", abort);
+    clearTimeout(grace);
+    if (onParentAbort) parent.removeEventListener("abort", onParentAbort);
   }
 }
 

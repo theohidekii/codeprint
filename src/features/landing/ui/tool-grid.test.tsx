@@ -16,7 +16,11 @@ describe("ToolGrid", () => {
         within(card).getByRole("heading", { name: tool.name }),
       ).toBeInTheDocument();
       expect(within(card).getByText(tool.tagline)).toBeInTheDocument();
-      expect(within(card).getByText("Coming soon")).toBeInTheDocument();
+      expect(
+        within(card).getByText(
+          tool.status === "available" ? "Available" : "Coming soon",
+        ),
+      ).toBeInTheDocument();
       expect(within(card).getByRole("link")).toHaveAttribute(
         "href",
         `/${tool.slug}`,

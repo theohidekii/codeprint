@@ -34,6 +34,9 @@ interface Segment {
 
 const EMPTY: Comparison = { similarity: 0, regions: [], renames: [] };
 
+/** Equal token runs shorter than this are treated as coincidence when locating code. */
+const MIN_SEGMENT_TOKENS = 2 * K;
+
 export function compare(
   snippet: NormalizedToken[],
   candidate: NormalizedToken[],
@@ -53,11 +56,22 @@ export function compare(
   for (const hash of distinct) if (index.has(hash)) matched++;
   if (matched === 0) return EMPTY;
 
+  // Short runs like `function ID ( ID ) {` match almost anywhere. They still count toward
+  // similarity, but only substantial runs locate code and suggest renames.
   const segments = findSegments(snippet, candidate, snippetPrints, index);
+  const substantial = segments.filter((s) => s.length >= MIN_SEGMENT_TOKENS);
+  const located = substantial.length > 0 ? substantial : segments;
+  const spans = mergeSpans(located);
+  // Renames come from the main match only: a lookalike elsewhere in the file is not evidence.
+  const main = spans[0];
   return {
     similarity: matched / distinct.size,
-    regions: toRegions(segments, snippet, candidate),
-    renames: findRenames(segments, snippet, candidate),
+    regions: spans.map((span) => toRegion(span, snippet, candidate)),
+    renames: findRenames(
+      located.filter((segment) => main && inside(segment, main)),
+      snippet,
+      candidate,
+    ),
   };
 }
 
@@ -116,13 +130,18 @@ function findSegments(
   return segments;
 }
 
-function toRegions(
-  segments: Segment[],
-  snippet: NormalizedToken[],
-  candidate: NormalizedToken[],
-): MatchRegion[] {
+/** Token spans (inclusive) covered by merged segments, on both sides. */
+interface Span {
+  s: number;
+  sEnd: number;
+  c: number;
+  cEnd: number;
+}
+
+/** Merges touching segments into spans, largest first: the main match leads. */
+function mergeSpans(segments: Segment[]): Span[] {
   const sorted = [...segments].sort((a, b) => a.s - b.s);
-  const merged: { s: number; sEnd: number; c: number; cEnd: number }[] = [];
+  const merged: Span[] = [];
   for (const { s, c, length } of sorted) {
     const sEnd = s + length - 1;
     const cEnd = c + length - 1;
@@ -134,14 +153,28 @@ function toRegions(
       merged.push({ s, sEnd, c, cEnd });
     }
   }
-  return merged.map(({ s, sEnd, c, cEnd }) => ({
+  return merged.sort((a, b) => b.sEnd - b.s - (a.sEnd - a.s));
+}
+
+function toRegion(
+  { s, sEnd, c, cEnd }: Span,
+  snippet: NormalizedToken[],
+  candidate: NormalizedToken[],
+): MatchRegion {
+  return {
     snippet: { start: snippet[s]!.token.line, end: snippet[sEnd]!.token.line },
     candidate: {
       start: candidate[c]!.token.line,
       end: candidate[cEnd]!.token.line,
     },
-  }));
+  };
 }
+
+const inside = (segment: Segment, span: Span) =>
+  segment.s >= span.s &&
+  segment.s <= span.sEnd &&
+  segment.c >= span.c &&
+  segment.c <= span.cEnd;
 
 /** Aligned identifiers inside matching runs. Each name keeps its most frequent counterpart. */
 function findRenames(

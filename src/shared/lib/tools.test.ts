@@ -14,8 +14,13 @@ describe("tool registry", () => {
     expect(tools.map((tool) => tool.phase)).toEqual([2, 3, 4, 5]);
   });
 
-  it("marks every tool as coming soon during phase 1", () => {
-    expect(tools.every((tool) => tool.status === "coming-soon")).toBe(true);
+  it("marks Trace as available and the other tools as coming soon", () => {
+    expect(tools.map((tool) => tool.status)).toEqual([
+      "available",
+      "coming-soon",
+      "coming-soon",
+      "coming-soon",
+    ]);
   });
 
   it("finds a tool by slug", () => {

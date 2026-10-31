@@ -35,30 +35,48 @@ function buildQuery(
     .join(" ");
 }
 
-/** Reads the `matches` events of a server-sent event stream, skipping anything malformed. */
-function parseMatches(body: string): unknown[] {
-  const matches: unknown[] = [];
-  for (const block of body.split(/\r?\n\r?\n/)) {
-    const lines = block.split(/\r?\n/);
-    const event = lines
-      .find((l) => l.startsWith("event:"))
-      ?.slice(6)
-      .trim();
-    if (event !== "matches") continue;
-    const data = lines
-      .filter((l) => l.startsWith("data:"))
-      .map((l) => l.slice(5).trim())
-      .join("\n");
-    try {
-      const parsed: unknown = JSON.parse(data);
-      if (Array.isArray(parsed)) matches.push(...parsed);
-    } catch {
-      // A broken event must not sink the whole search.
-    }
+/** Turns one server-sent event block into hits. Anything malformed is skipped. */
+function hitsFromEvent(block: string): SearchHit[] {
+  const lines = block.split(/\r?\n/);
+  const event = lines
+    .find((l) => l.startsWith("event:"))
+    ?.slice(6)
+    .trim();
+  if (event !== "matches") return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(
+      lines
+        .filter((l) => l.startsWith("data:"))
+        .map((l) => l.slice(5).trim())
+        .join("\n"),
+    );
+  } catch {
+    return []; // A broken event must not sink the whole search.
   }
-  return matches;
+  if (!Array.isArray(parsed)) return [];
+
+  const hits: SearchHit[] = [];
+  for (const raw of parsed) {
+    const match = matchSchema.safeParse(raw);
+    if (!match.success || !match.data.repository.startsWith(GITHUB_PREFIX))
+      continue;
+    hits.push({
+      provider: "sourcegraph",
+      repository: match.data.repository.slice(GITHUB_PREFIX.length),
+      path: match.data.path,
+      commit: match.data.commit,
+      stars: match.data.repoStars ?? null,
+    });
+  }
+  return hits;
 }
 
+/**
+ * Sourcegraph's streaming search. Hits are read as events arrive, so when a slow search is cut
+ * off the hits received so far are still returned.
+ */
 export function createSourcegraphProvider(
   options: { baseUrl?: string; fetch?: typeof fetch } = {},
 ): SearchProvider {
@@ -72,7 +90,7 @@ export function createSourcegraphProvider(
       const url = new URL("/.api/search/stream", baseUrl);
       url.searchParams.set("q", buildQuery(query, searchOptions));
 
-      let body: string;
+      const hits: SearchHit[] = [];
       try {
         const response = await fetcher(url, {
           headers: { accept: "text/event-stream" },
@@ -80,25 +98,25 @@ export function createSourcegraphProvider(
         });
         const error = statusError(response.status, "sourcegraph");
         if (error) throw error;
-        body = await response.text();
+        if (!response.body) return hits;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          buffer += done
+            ? decoder.decode()
+            : decoder.decode(value, { stream: true });
+          const blocks = buffer.split(/\r?\n\r?\n/);
+          buffer = done ? "" : (blocks.pop() ?? "");
+          for (const block of blocks) hits.push(...hitsFromEvent(block));
+          if (done) return hits;
+        }
       } catch (error) {
+        if (searchOptions.signal.aborted && hits.length > 0) return hits;
         throw toProviderError(error, "sourcegraph");
       }
-
-      const hits: SearchHit[] = [];
-      for (const raw of parseMatches(body)) {
-        const match = matchSchema.safeParse(raw);
-        if (!match.success || !match.data.repository.startsWith(GITHUB_PREFIX))
-          continue;
-        hits.push({
-          provider: "sourcegraph",
-          repository: match.data.repository.slice(GITHUB_PREFIX.length),
-          path: match.data.path,
-          commit: match.data.commit,
-          stars: match.data.repoStars ?? null,
-        });
-      }
-      return hits;
     },
   };
 }

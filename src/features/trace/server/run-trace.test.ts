@@ -213,6 +213,27 @@ describe("runTrace", () => {
     expect(events.at(-1)).toEqual({ type: "done", total: 0 });
   });
 
+  it("keeps the partial hits of a provider that answers when cut off", async () => {
+    const events = await run({
+      providers: [
+        provider({
+          search: (_, { signal }) =>
+            new Promise<SearchHit[]>((resolve) =>
+              // Like a real stream reader, it settles a moment after the abort.
+              signal.addEventListener("abort", () =>
+                setTimeout(() => resolve([hit("match.js")]), 20),
+              ),
+            ),
+        }),
+      ],
+      fetchContent,
+      timeoutMs: 50,
+    });
+
+    expect(events.filter((e) => e.type === "result")).toHaveLength(1);
+    expect(events.at(-1)).toEqual({ type: "done", total: 1 });
+  });
+
   it("stops and cancels provider work when the caller aborts", async () => {
     const controller = new AbortController();
     const seenSignals: AbortSignal[] = [];

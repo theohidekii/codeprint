@@ -55,6 +55,50 @@ describe("compare", () => {
     });
   });
 
+  it("ignores tiny coincidental matches when locating code and renames", () => {
+    // `function resolve(key) {` shares a short token run with the snippet's first line.
+    const decoy = "function resolve(key) {\n  return cache.get(key);\n}\n\n";
+    const { regions, renames } = compare(
+      prepare(SUM_POSITIVE),
+      prepare(decoy + SUM_POSITIVE_RENAMED),
+    );
+
+    expect(regions).toHaveLength(1);
+    expect(regions[0]!.candidate.start).toBe(5);
+    expect(renames).toContainEqual({ from: "sumPositive", to: "addUp" });
+    expect(renames.some((r) => r.to === "resolve" || r.to === "key")).toBe(
+      false,
+    );
+  });
+
+  it("takes renames from the main match only", () => {
+    // A second, similar function elsewhere in the file must not suggest renames.
+    const lookalike = [
+      "function check(items) {",
+      "  let total = 0;",
+      "  for (const n of items) {",
+      "    return total;",
+      "  }",
+      "}",
+    ].join("\n");
+
+    const { renames } = compare(
+      prepare(SUM_POSITIVE),
+      prepare(`${lookalike}\n\n${SUM_POSITIVE}`),
+    );
+
+    expect(renames).toEqual([]);
+  });
+
+  it("lists the largest matching region first", () => {
+    const head = SUM_POSITIVE.split("\n").slice(0, 3).join("\n");
+    const candidate = `${head}\n  // unrelated\n}\n\n${SUM_POSITIVE_RENAMED}`;
+
+    const { regions } = compare(prepare(SUM_POSITIVE), prepare(candidate));
+
+    expect(regions[0]!.candidate.start).toBeGreaterThan(5);
+  });
+
   it("returns an empty comparison for an empty candidate", () => {
     expect(compare(prepare(SUM_POSITIVE), [])).toEqual({
       similarity: 0,

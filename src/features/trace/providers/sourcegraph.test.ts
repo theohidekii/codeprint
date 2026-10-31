@@ -127,6 +127,37 @@ describe("sourcegraph provider", () => {
     },
   );
 
+  it("keeps the hits that arrived before the request was cut off", async () => {
+    const first = fixture("sourcegraph-malformed.txt").split("\n\n")[0]!;
+    server.use(
+      http.get(ENDPOINT, () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            // One complete event, then the search keeps running and never finishes.
+            controller.enqueue(new TextEncoder().encode(`${first}\n\n`));
+          },
+        });
+        return new HttpResponse(stream, {
+          headers: { "content-type": "text/event-stream" },
+        });
+      }),
+    );
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 100);
+
+    const hits = await search(regexQuery, "javascript", controller.signal);
+
+    expect(hits).toEqual([
+      {
+        provider: "sourcegraph",
+        repository: "acme/utils",
+        path: "src/timing.js",
+        commit: "abc123",
+        stars: 12,
+      },
+    ]);
+  });
+
   it("reports an aborted request as a timeout", async () => {
     serve(fixture("sourcegraph-matches.txt"));
     const controller = new AbortController();
