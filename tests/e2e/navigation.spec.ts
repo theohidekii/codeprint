@@ -56,5 +56,21 @@ test.describe("navigation", () => {
     }
     await page.keyboard.press("Tab");
     await expect(page.locator(":focus")).toHaveAccessibleName(/^theme:/i);
+
+    for (const name of ["Trace a snippet", "View on GitHub"]) {
+      await page.keyboard.press("Tab");
+      await expect(page.locator(":focus")).toHaveAccessibleName(name);
+    }
+
+    // Tool cards draw their focus ring on the card, not on the heading link inside it.
+    for (const name of tools) {
+      await page.keyboard.press("Tab");
+      const focused = page.locator(":focus");
+      await expect(focused).toHaveAccessibleName(name);
+      const cardOutline = await focused.evaluate(
+        (el) => getComputedStyle(el.closest("article")!).outlineStyle,
+      );
+      expect(cardOutline, `${name} card`).not.toBe("none");
+    }
   });
 });

@@ -69,6 +69,40 @@ describe("SiteHeader", () => {
     expect(button).toHaveFocus();
   });
 
+  it("stays closed after following a menu link and coming back", async () => {
+    pathname = "/trace";
+    const { rerender } = render(<SiteHeader />);
+    await userEvent.click(screen.getByRole("button", { name: /menu/i }));
+    const menu = screen.getByRole("navigation", { name: "Menu" });
+
+    await userEvent.click(within(menu).getByRole("link", { name: "Snapshot" }));
+    pathname = "/snapshot";
+    rerender(<SiteHeader />);
+    pathname = "/trace";
+    rerender(<SiteHeader />);
+
+    expect(
+      screen.queryByRole("navigation", { name: "Menu" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("closes the menu when the link for the current page is followed", async () => {
+    pathname = "/trace";
+    render(<SiteHeader />);
+    await userEvent.click(screen.getByRole("button", { name: /menu/i }));
+
+    await userEvent.click(
+      within(screen.getByRole("navigation", { name: "Menu" })).getByRole(
+        "link",
+        { name: "Trace" },
+      ),
+    );
+
+    expect(
+      screen.queryByRole("navigation", { name: "Menu" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("links the brand to the home page", () => {
     render(<SiteHeader />);
 

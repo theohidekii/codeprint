@@ -14,9 +14,11 @@ import { ThemeToggle } from "./theme-toggle";
 function ToolLinks({
   pathname,
   className,
+  onNavigate,
 }: {
   pathname: string;
   className?: string;
+  onNavigate?: () => void;
 }) {
   return tools.map((tool) => {
     const href = `/${tool.slug}`;
@@ -26,6 +28,7 @@ function ToolLinks({
         key={tool.slug}
         href={href}
         aria-current={current ? "page" : undefined}
+        onClick={onNavigate}
         className={cn(
           "transition-colors",
           current ? "text-text" : "text-muted hover:text-text",
@@ -102,6 +105,7 @@ export function SiteHeader() {
         >
           <ToolLinks
             pathname={pathname}
+            onNavigate={() => setOpenOn(null)}
             className="hover:bg-surface-raised rounded-md px-4 py-3"
           />
         </nav>

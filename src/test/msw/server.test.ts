@@ -16,6 +16,12 @@ describe("msw test server", () => {
   });
 
   it("rejects requests that no handler covers, so tests never reach the network", async () => {
-    await expect(fetch("https://api.example.test/unhandled")).rejects.toThrow();
+    // Assert on MSW's own error: a DNS failure for the fake host would also reject.
+    const error = await fetch("https://api.example.test/unhandled").catch(
+      (e: unknown) => e,
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect(String((error as Error).cause)).toContain("[MSW]");
   });
 });
