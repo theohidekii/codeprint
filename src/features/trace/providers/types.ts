@@ -3,7 +3,9 @@ import type { Language } from "../domain/types";
 
 export type ProviderName = "sourcegraph" | "github";
 
-export type ProviderStatus = "ok" | "rate-limited" | "timeout" | "error";
+/** "partial": some of the provider's queries failed, but others answered. */
+export type ProviderStatus =
+  "ok" | "partial" | "rate-limited" | "timeout" | "error";
 
 export interface SearchHit {
   provider: ProviderName;
@@ -28,7 +30,7 @@ export interface SearchProvider {
 
 export class ProviderError extends Error {
   constructor(
-    public readonly status: Exclude<ProviderStatus, "ok">,
+    public readonly status: Exclude<ProviderStatus, "ok" | "partial">,
     message: string,
   ) {
     super(message);

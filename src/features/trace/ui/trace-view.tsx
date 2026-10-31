@@ -16,8 +16,9 @@ import { useTrace } from "./use-trace";
 
 const NO_MATCHES =
   "No public matches found. The code may be original, private, or changed beyond recognition.";
-const PARTIAL =
+const UNAVAILABLE =
   "Sourcegraph didn't respond, so these results may be incomplete.";
+const PARTIAL = "Some searches took too long, so results may be incomplete.";
 
 function isMac(): boolean {
   return /Mac|iPhone|iPad/.test(navigator.userAgent);
@@ -39,8 +40,12 @@ export function TraceView() {
   };
 
   const sourcegraph = providers.sourcegraph;
-  const partial =
-    state === "done" && sourcegraph !== undefined && sourcegraph !== "ok";
+  const warning =
+    state !== "done" || sourcegraph === undefined || sourcegraph === "ok"
+      ? null
+      : sourcegraph === "partial"
+        ? PARTIAL
+        : UNAVAILABLE;
 
   const status =
     state === "tracing"
@@ -109,9 +114,9 @@ export function TraceView() {
           </p>
         )}
 
-        {partial && (
+        {warning && (
           <p className="border-border text-muted rounded-lg border px-5 py-4 text-sm">
-            {PARTIAL}
+            {warning}
           </p>
         )}
 

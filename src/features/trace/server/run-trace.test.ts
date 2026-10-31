@@ -213,6 +213,27 @@ describe("runTrace", () => {
     expect(events.at(-1)).toEqual({ type: "done", total: 0 });
   });
 
+  it("reports a provider as partial when only some of its queries fail", async () => {
+    const events = await run({
+      providers: [
+        provider({
+          search: async (query) => {
+            if (query.regex) throw new ProviderError("timeout", "slow");
+            return [hit("match.js")];
+          },
+        }),
+      ],
+      fetchContent,
+    });
+
+    expect(events).toContainEqual({
+      type: "provider",
+      provider: "sourcegraph",
+      status: "partial",
+    });
+    expect(events.filter((e) => e.type === "result")).toHaveLength(1);
+  });
+
   it("keeps the partial hits of a provider that answers when cut off", async () => {
     const events = await run({
       providers: [

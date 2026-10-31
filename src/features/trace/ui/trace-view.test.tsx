@@ -134,6 +134,23 @@ describe("TraceView", () => {
     },
   );
 
+  it("says some searches were slow when Sourcegraph answered only in part", () => {
+    hook = {
+      ...base,
+      state: "done",
+      results: [aResult],
+      providers: { sourcegraph: "partial" },
+    };
+    render(<TraceView />);
+
+    expect(
+      screen.getByText(
+        "Some searches took too long, so results may be incomplete.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/didn't respond/)).not.toBeInTheDocument();
+  });
+
   it("shows errors as alerts", () => {
     hook = {
       ...base,

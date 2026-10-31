@@ -219,7 +219,8 @@ export async function* runTrace(
   };
 
   const searches = deps.providers.map(async (provider) => {
-    let status: ProviderStatus = "ok";
+    let answered = 0;
+    let failure: ProviderStatus | undefined;
     const usable = queries.filter((q) => provider.supportsRegex || !q.regex);
     await Promise.all(
       usable.map(async (query) => {
@@ -233,12 +234,17 @@ export async function* runTrace(
               }),
             ),
           );
+          answered++;
         } catch (error) {
-          if (status === "ok")
-            status = toProviderError(error, provider.name).status;
+          failure ??= toProviderError(error, provider.name).status;
         }
       }),
     );
+    const status: ProviderStatus = !failure
+      ? "ok"
+      : answered > 0
+        ? "partial"
+        : failure;
     if (!controller.signal.aborted) {
       channel.push({ type: "provider", provider: provider.name, status });
     }
