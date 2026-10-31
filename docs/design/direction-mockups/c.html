@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codeprint · Direction C · Comparison</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@75..100,400..700&family=Spline+Sans+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Direction C — "Comparison": a comparison microscope under an alternate light source.
+     Your snippet on the left, the match on the right, one scan line reveals what lines up. */
+      :root {
+        --bg: #f6f5fa;
+        --surface: #ffffff;
+        --text: #1b1838;
+        --muted: #57527a;
+        --border: #dcd9ea;
+        --accent: #b4530a;
+        --on-accent: #ffffff;
+        --accent-soft: #fff4ea;
+        --match: rgba(180, 83, 10, 0.12);
+        --field: #efedf6;
+        --display: "Instrument Sans", system-ui, sans-serif;
+        --mono: "Spline Sans Mono", ui-monospace, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #15132b;
+          --surface: #1e1b3a;
+          --text: #eeeaf8;
+          --muted: #a9a3c7;
+          --border: #34305a;
+          --accent: #ff9a3c;
+          --on-accent: #1b1838;
+          --accent-soft: #3a2a2a;
+          --match: rgba(255, 154, 60, 0.14);
+          --field: #1a1834;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #15132b;
+        --surface: #1e1b3a;
+        --text: #eeeaf8;
+        --muted: #a9a3c7;
+        --border: #34305a;
+        --accent: #ff9a3c;
+        --on-accent: #1b1838;
+        --accent-soft: #3a2a2a;
+        --match: rgba(255, 154, 60, 0.14);
+        --field: #1a1834;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--display);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 0;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 19px;
+        text-decoration: none;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .brand i {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: conic-gradient(var(--accent) 0 50%, var(--muted) 0);
+      }
+      nav {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        font-size: 15px;
+      }
+      nav a {
+        text-decoration: none;
+        color: var(--muted);
+      }
+      nav a:hover {
+        color: var(--text);
+      }
+      .toggle {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font: 500 13px var(--display);
+        cursor: pointer;
+      }
+
+      .hero {
+        text-align: center;
+        padding: 64px 0 40px;
+      }
+      h1 {
+        font-weight: 600;
+        font-stretch: 75%;
+        font-size: clamp(52px, 9vw, 128px);
+        line-height: 0.9;
+        letter-spacing: -0.03em;
+      }
+      .sub {
+        margin: 24px auto 0;
+        max-width: 32em;
+        font-size: 19px;
+        color: var(--muted);
+      }
+      .ctas {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        height: 48px;
+        padding: 0 22px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        text-decoration: none;
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+      .btn.secondary {
+        border: 1px solid var(--border);
+      }
+
+      .scope {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin: 56px 0 24px;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: var(--field);
+      }
+      .scope::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 2px;
+        background: var(--accent);
+        transform: translateX(-1px);
+      }
+      .pane {
+        padding: 28px 32px 32px;
+        min-width: 0;
+      }
+      .pane header {
+        padding: 0 0 18px;
+        font-size: 14px;
+        color: var(--muted);
+        display: block;
+      }
+      .pane header strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .pane ol {
+        list-style: none;
+        padding: 0;
+        font: 15px/2 var(--mono);
+        counter-reset: ln;
+      }
+      .pane li {
+        counter-increment: ln;
+        white-space: pre;
+        position: relative;
+        padding-left: 36px;
+        border-radius: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pane li::before {
+        content: counter(ln);
+        position: absolute;
+        left: 0;
+        width: 24px;
+        text-align: right;
+        color: var(--muted);
+        opacity: 0.6;
+      }
+      .pane li.hit {
+        background: var(--match);
+      }
+      .pane .ren {
+        color: var(--accent);
+      }
+      .scan {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        top: 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+        box-shadow: 0 0 24px 6px var(--match);
+        pointer-events: none;
+      }
+      .scope .hit {
+        transition: background 0.4s;
+      }
+      .scope.scanning .hit:not(.lit) {
+        background: transparent;
+      }
+      .verdict {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        justify-content: center;
+        font-size: 15px;
+        color: var(--muted);
+        margin-bottom: 96px;
+      }
+      .verdict b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .chip {
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .tool {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+        padding: 40px;
+        border-radius: 24px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        margin-bottom: 96px;
+      }
+      .tool h2 {
+        font-size: 36px;
+        font-weight: 600;
+        font-stretch: 75%;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        min-width: 160px;
+      }
+      .tool p {
+        color: var(--muted);
+        max-width: 34em;
+      }
+      .badge {
+        display: inline-block;
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      @media (max-width: 760px) {
+        nav a {
+          display: none;
+        }
+        .scope {
+          grid-template-columns: 1fr;
+        }
+        .scope::after {
+          display: none;
+        }
+        .pane + .pane {
+          border-top: 2px solid var(--accent);
+        }
+        .pane {
+          padding: 20px 16px;
+        }
+        .tool {
+          flex-direction: column;
+          gap: 12px;
+          padding: 28px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .scan {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a class="brand" href="#"><i></i>Codeprint</a>
+        <nav aria-label="Primary">
+          <a href="#">Trace</a><a href="#">Snapshot</a
+          ><a href="#">Fingerprint</a><a href="#">Blueprint</a
+          ><button class="toggle" type="button" id="theme">
+            Theme: system
+          </button>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <h1>The fingerprint of code.</h1>
+        <p class="sub">
+          Trace a snippet back to its source, even after the variables were
+          renamed. Then turn code into something worth sharing.
+        </p>
+        <div class="ctas">
+          <a class="btn primary" href="#">Trace a snippet</a
+          ><a class="btn secondary" href="#">View on GitHub</a>
+        </div>
+      </section>
+
+      <figure
+        class="scope scanning"
+        id="scope"
+        aria-label="Your snippet compared with a matching file; four of five lines match after renaming"
+      >
+        <div class="pane">
+          <header><strong>Your snippet</strong></header>
+          <ol>
+            <li class="hit">
+              function <span class="ren">debounce</span>(<span class="ren"
+                >fn</span
+              >, <span class="ren">ms</span>) {
+            </li>
+            <li class="hit">let <span class="ren">t</span>;</li>
+            <li class="hit">
+              return (...<span class="ren">args</span>) =&gt; {
+            </li>
+            <li class="hit">clearTimeout(<span class="ren">t</span>);</li>
+            <li>t = setTimeout(() =&gt; fn(...args), ms);</li>
+          </ol>
+        </div>
+        <div class="pane">
+          <header>
+            <strong>acme/utils</strong> src/timing.js, lines 12 to 16
+          </header>
+          <ol>
+            <li class="hit">
+              function <span class="ren">delay</span>(<span class="ren"
+                >callback</span
+              >, <span class="ren">wait</span>) {
+            </li>
+            <li class="hit">let <span class="ren">timer</span>;</li>
+            <li class="hit">
+              return (...<span class="ren">params</span>) =&gt; {
+            </li>
+            <li class="hit">clearTimeout(<span class="ren">timer</span>);</li>
+            <li>timer = setTimeout(callback, wait, ...params);</li>
+          </ol>
+        </div>
+        <div class="scan" id="scan"></div>
+      </figure>
+      <p class="verdict">
+        <span><b>87% similar</b> after normalization</span
+        ><span
+          >Renamed: <span class="chip">fn → callback</span>
+          <span class="chip">ms → wait</span>
+          <span class="chip">t → timer</span></span
+        >
+      </p>
+
+      <article class="tool">
+        <h2>Trace</h2>
+        <div>
+          <p>
+            Paste a snippet. Codeprint finds public repositories with the same
+            code, even when every identifier was renamed, and ranks them by
+            similarity.
+          </p>
+          <span class="badge">Coming in Phase 2</span>
+        </div>
+      </article>
+    </div>
+
+    <script>
+      // One orchestrated moment: a scan line sweeps the comparison and lights matching rows as it passes.
+      const scope = document.getElementById("scope");
+      const scan = document.getElementById("scan");
+      const rows = [...scope.querySelectorAll("li.hit")];
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) scope.classList.remove("scanning");
+      else {
+        const start = performance.now() + 400,
+          dur = 1800;
+        const step = (now) => {
+          const t = Math.max(0, Math.min((now - start) / dur, 1));
+          const y = t * scope.clientHeight;
+          scan.style.transform = `translateY(${y}px)`;
+          const top = scope.getBoundingClientRect().top;
+          rows.forEach((r) => {
+            if (r.getBoundingClientRect().top - top < y) r.classList.add("lit");
+          });
+          if (t < 1) requestAnimationFrame(step);
+          else {
+            scope.classList.remove("scanning");
+            scan.style.opacity = "0";
+            scan.style.transition = "opacity .5s";
+          }
+        };
+        requestAnimationFrame(step);
+      }
+      const btn = document.getElementById("theme");
+      const modes = ["system", "light", "dark"];
+      btn.onclick = () => {
+        const next =
+          modes[(modes.indexOf(btn.textContent.split(": ")[1]) + 1) % 3];
+        btn.textContent = "Theme: " + next;
+        next === "system"
+          ? document.documentElement.removeAttribute("data-theme")
+          : (document.documentElement.dataset.theme = next);
+      };
+    </script>
+  </body>
+</html>
