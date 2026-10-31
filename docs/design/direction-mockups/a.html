@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codeprint · Direction A · Latent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;900&family=Fragment+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Direction A — "Latent": a latent print developed with ninhydrin. Ridges are written in code. */
+      :root {
+        --bg: #eef1f4;
+        --surface: #ffffff;
+        --text: #161a2e;
+        --muted: #535a70;
+        --border: #cdd3dc;
+        --accent: #6a2c91;
+        --accent-soft: #ece2f3;
+        --ridge-idle: #c4cad4;
+        --display: "Schibsted Grotesk", system-ui, sans-serif;
+        --mono: "Fragment Mono", ui-monospace, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #12121c;
+          --surface: #1b1b28;
+          --text: #eceaf4;
+          --muted: #a4a2b8;
+          --border: #2e2d40;
+          --accent: #c08be6;
+          --accent-soft: #2a2140;
+          --ridge-idle: #2c2b3c;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #12121c;
+        --surface: #1b1b28;
+        --text: #eceaf4;
+        --muted: #a4a2b8;
+        --border: #2e2d40;
+        --accent: #c08be6;
+        --accent-soft: #2a2140;
+        --ridge-idle: #2c2b3c;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--display);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        font-size: 19px;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+      .brand svg {
+        color: var(--accent);
+      }
+      nav {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        font-size: 15px;
+      }
+      nav a {
+        text-decoration: none;
+        color: var(--muted);
+      }
+      nav a:hover {
+        color: var(--text);
+      }
+      .toggle {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font: 500 13px var(--display);
+        cursor: pointer;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        gap: 48px;
+        align-items: center;
+        padding: 56px 0 88px;
+      }
+      h1 {
+        font-weight: 900;
+        font-size: clamp(48px, 7.2vw, 96px);
+        line-height: 0.95;
+        letter-spacing: -0.045em;
+      }
+      .sub {
+        margin-top: 28px;
+        max-width: 30em;
+        font-size: 19px;
+        color: var(--muted);
+      }
+      .ctas {
+        display: flex;
+        gap: 12px;
+        margin-top: 36px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        height: 48px;
+        padding: 0 22px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 16px;
+        text-decoration: none;
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .btn.secondary {
+        border: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      .print {
+        position: relative;
+        aspect-ratio: 1;
+        width: 100%;
+        max-width: 540px;
+        justify-self: end;
+      }
+      .print svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .print text {
+        font-family: var(--mono);
+        font-size: 7.4px;
+        fill: var(--ridge-idle);
+      }
+      .print .developed text {
+        fill: var(--accent);
+      }
+      .print figcaption {
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .tool {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 0;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: var(--surface);
+        overflow: hidden;
+        margin-bottom: 96px;
+      }
+      .tool .copy {
+        padding: 40px;
+      }
+      .tool h2 {
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+      }
+      .tool p {
+        margin-top: 12px;
+        color: var(--muted);
+        max-width: 26em;
+      }
+      .badge {
+        display: inline-block;
+        margin-top: 24px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .tool pre {
+        margin: 0;
+        padding: 40px;
+        background: var(--bg);
+        border-left: 1px solid var(--border);
+        font: 14px/1.75 var(--mono);
+        overflow-x: auto;
+      }
+      .tool pre mark {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-radius: 3px;
+        padding: 0 2px;
+      }
+
+      @media (max-width: 860px) {
+        nav a {
+          display: none;
+        }
+        .hero,
+        .tool {
+          grid-template-columns: 1fr;
+        }
+        .print {
+          justify-self: center;
+          max-width: 420px;
+        }
+        .tool pre {
+          border-left: 0;
+          border-top: 1px solid var(--border);
+          padding: 24px;
+        }
+        .tool .copy {
+          padding: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a class="brand" href="#"
+          ><svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <path d="M12 3a8 8 0 0 0-8 8v2" />
+            <path d="M20 13v-2a8 8 0 0 0-4-6.9" />
+            <path d="M8 20a10 10 0 0 0 1-5v-4a3 3 0 0 1 6 0v3" />
+            <path d="M12 11v4a14 14 0 0 1-1.5 6" />
+            <path d="M16 17a17 17 0 0 1-.6 3.6" /></svg
+          >Codeprint</a
+        >
+        <nav aria-label="Primary">
+          <a href="#">Trace</a><a href="#">Snapshot</a
+          ><a href="#">Fingerprint</a><a href="#">Blueprint</a
+          ><button class="toggle" type="button" id="theme">
+            Theme: system
+          </button>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <div>
+          <h1>The fingerprint of code.</h1>
+          <p class="sub">
+            Trace a snippet back to its source, even after the variables were
+            renamed. Then turn code into something worth sharing.
+          </p>
+          <div class="ctas">
+            <a class="btn primary" href="#">Trace a snippet</a
+            ><a class="btn secondary" href="#">View on GitHub</a>
+          </div>
+        </div>
+        <figure
+          class="print"
+          aria-label="A fingerprint whose ridges are lines of code"
+        >
+          <svg viewBox="-160 -170 320 340" id="ridges"></svg>
+        </figure>
+      </section>
+
+      <article class="tool">
+        <div class="copy">
+          <h2>Trace</h2>
+          <p>
+            Paste a snippet. Codeprint finds public repositories with the same
+            code, even when every identifier was renamed, and ranks them by
+            similarity.
+          </p>
+          <span class="badge">Coming in Phase 2</span>
+        </div>
+        <pre><code>function <mark>sum</mark>(<mark>values</mark>) {
+  let <mark>acc</mark> = 0;
+  for (const <mark>v</mark> of <mark>values</mark>) <mark>acc</mark> += <mark>v</mark>;
+  return <mark>acc</mark>;
+}</code></pre>
+      </article>
+    </div>
+
+    <script>
+      const code =
+        "function sum(values){let acc=0;for(const v of values)acc+=v;return acc;} const total=items.reduce((a,b)=>a+b,0); if(!cache.has(key)){cache.set(key,compute(key))} export default trace; ";
+      const svg = document.getElementById("ridges");
+      const ns = "http://www.w3.org/2000/svg";
+      const defs = document.createElementNS(ns, "defs");
+      const idle = document.createElementNS(ns, "g");
+      const dev = document.createElementNS(ns, "g");
+      dev.setAttribute("class", "developed");
+      // A loop-pattern print: ridges enter from the left, recurve around the core and exit left again,
+      // with arches sweeping across above and below. Everything is clipped to a fingertip outline.
+      const core = { x: 30, y: 6 };
+      const wob = (x, i) =>
+        2.2 * Math.sin(x / 23 + i * 1.3) + 1.1 * Math.sin(x / 9 - i);
+      const ridges = [];
+      for (let i = 0; i < 12; i++) {
+        const r = 7 + i * 8.4;
+        const pts = [];
+        for (let x = -170; x <= core.x; x += 4)
+          pts.push([x, core.y + r + wob(x, i)]);
+        for (let a = Math.PI / 2; a >= -Math.PI / 2; a -= 0.06)
+          pts.push([core.x + Math.cos(a) * r * 1.08, core.y + Math.sin(a) * r]);
+        for (let x = core.x; x >= -170; x -= 4)
+          pts.push([
+            x,
+            core.y - r + wob(x, i + 5) - Math.pow((core.x - x) / 120, 2) * 6,
+          ]);
+        ridges.push(pts);
+      }
+      for (let j = 0; j < 9; j++) {
+        const lift = 7 + 12 * 8.4 + j * 8.4;
+        const over = [],
+          under = [];
+        for (let x = -170; x <= 170; x += 4) {
+          const bow = Math.pow(x / 170, 2) * (18 + j * 3);
+          over.push([x, core.y - lift + bow + wob(x, j + 20)]);
+          under.unshift([x, core.y + lift - bow * 0.6 + wob(x, j + 40)]);
+        }
+        ridges.push(over, under);
+      }
+      ridges.forEach((pts, i) => {
+        const p = document.createElementNS(ns, "path");
+        p.setAttribute("id", "r" + i);
+        p.setAttribute(
+          "d",
+          "M" +
+            pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L"),
+        );
+        defs.appendChild(p);
+        for (const g of [idle, dev]) {
+          const t = document.createElementNS(ns, "text");
+          const tp = document.createElementNS(ns, "textPath");
+          tp.setAttribute("href", "#r" + i);
+          tp.textContent = code.repeat(3).slice((i * 37) % code.length);
+          t.appendChild(tp);
+          g.appendChild(t);
+        }
+      });
+      const tip = document.createElementNS(ns, "clipPath");
+      tip.id = "tip";
+      tip.innerHTML = '<ellipse cx="0" cy="0" rx="128" ry="160" />';
+      defs.appendChild(tip);
+      // The single orchestrated moment: the print "develops" from the core outward, like ninhydrin.
+      const clip = document.createElementNS(ns, "clipPath");
+      clip.id = "develop";
+      const disc = document.createElementNS(ns, "circle");
+      disc.setAttribute("r", "0");
+      clip.appendChild(disc);
+      defs.appendChild(clip);
+      disc.setAttribute("cx", core.x);
+      disc.setAttribute("cy", core.y);
+      dev.setAttribute("clip-path", "url(#develop)");
+      const finger = document.createElementNS(ns, "g");
+      finger.setAttribute("clip-path", "url(#tip)");
+      finger.append(idle, dev);
+      svg.append(defs, finger);
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) disc.setAttribute("r", "240");
+      else {
+        const start = performance.now();
+        const step = (now) => {
+          const t = Math.min((now - start) / 2200, 1);
+          disc.setAttribute("r", (240 * (1 - Math.pow(1 - t, 3))).toFixed(1));
+          if (t < 1) requestAnimationFrame(step);
+        };
+        setTimeout(() => requestAnimationFrame(step), 300);
+      }
+      const btn = document.getElementById("theme");
+      const modes = ["system", "light", "dark"];
+      btn.onclick = () => {
+        const next =
+          modes[(modes.indexOf(btn.textContent.split(": ")[1]) + 1) % 3];
+        btn.textContent = "Theme: " + next;
+        next === "system"
+          ? document.documentElement.removeAttribute("data-theme")
+          : (document.documentElement.dataset.theme = next);
+      };
+    </script>
+  </body>
+</html>

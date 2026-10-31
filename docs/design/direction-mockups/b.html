@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codeprint · Direction B · Cyanotype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Azeret+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Direction B — "Cyanotype": code examined as an engineering drawing. Dimension lines measure tokens. */
+      :root {
+        --bg: #f7f9fc;
+        --surface: #ffffff;
+        --text: #0f2f5e;
+        --muted: #4a5d7e;
+        --border: #c9d5e6;
+        --grid: rgba(15, 47, 94, 0.07);
+        --accent: #b3261e;
+        --line: #0f2f5e;
+        --display: "Archivo", system-ui, sans-serif;
+        --mono: "Azeret Mono", ui-monospace, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #123a73;
+          --surface: #0f3263;
+          --text: #f3f6fb;
+          --muted: #b9c8e0;
+          --border: #3b5f95;
+          --grid: rgba(255, 255, 255, 0.08);
+          --accent: #ffd24a;
+          --line: #e8eef8;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #123a73;
+        --surface: #0f3263;
+        --text: #f3f6fb;
+        --muted: #b9c8e0;
+        --border: #3b5f95;
+        --grid: rgba(255, 255, 255, 0.08);
+        --accent: #ffd24a;
+        --line: #e8eef8;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--display);
+        line-height: 1.5;
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 24px 24px;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px dashed var(--accent);
+        outline-offset: 3px;
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .brand {
+        font-stretch: 125%;
+        font-weight: 800;
+        font-size: 18px;
+        text-decoration: none;
+        letter-spacing: 0.01em;
+      }
+      nav {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        font-size: 15px;
+      }
+      nav a {
+        text-decoration: none;
+        color: var(--muted);
+      }
+      nav a:hover {
+        color: var(--text);
+      }
+      .toggle {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 6px 12px;
+        font: 500 13px var(--display);
+        cursor: pointer;
+      }
+
+      .hero {
+        padding: 72px 0 40px;
+      }
+      h1 {
+        font-stretch: 125%;
+        font-weight: 800;
+        font-size: clamp(40px, 6.4vw, 84px);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        max-width: 12ch;
+      }
+      .sub {
+        margin-top: 24px;
+        max-width: 34em;
+        font-size: 19px;
+        color: var(--muted);
+        font-stretch: 100%;
+      }
+      .ctas {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        height: 48px;
+        padding: 0 22px;
+        font-weight: 700;
+        font-size: 16px;
+        text-decoration: none;
+        border: 1.5px solid var(--text);
+      }
+      .btn.primary {
+        background: var(--text);
+        color: var(--bg);
+      }
+
+      .sheet {
+        position: relative;
+        margin: 48px 0 32px;
+        border: 1.5px solid var(--line);
+        background: color-mix(in srgb, var(--surface) 70%, transparent);
+      }
+      .drawing {
+        padding: 64px 40px 40px;
+        overflow-x: auto;
+      }
+      .drawing svg {
+        display: block;
+        width: 100%;
+        min-width: 720px;
+        height: auto;
+        color: var(--line);
+      }
+      .drawing text {
+        font-family: var(--mono);
+      }
+      .code {
+        font-size: 25px;
+        fill: var(--text);
+      }
+      .dim {
+        stroke: currentColor;
+        stroke-width: 1;
+        fill: none;
+      }
+      .dim-label {
+        font-size: 12px;
+        fill: var(--accent);
+      }
+      .draw {
+        stroke-dasharray: var(--len);
+        stroke-dashoffset: var(--len);
+        animation: draw 0.6s ease-out forwards;
+        animation-delay: var(--d);
+      }
+      .fade {
+        opacity: 0;
+        animation: fade 0.3s ease-out forwards;
+        animation-delay: var(--d);
+      }
+      @keyframes draw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes fade {
+        to {
+          opacity: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .draw,
+        .fade {
+          animation: none;
+          stroke-dashoffset: 0;
+          opacity: 1;
+        }
+      }
+
+      .titleblock {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        border-top: 1.5px solid var(--line);
+        font-size: 13px;
+      }
+      .titleblock div {
+        padding: 10px 14px;
+        border-left: 1px solid var(--border);
+      }
+      .titleblock div:first-child {
+        border-left: 0;
+      }
+      .titleblock span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .titleblock strong {
+        font-weight: 600;
+      }
+
+      .tool {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        border: 1.5px solid var(--line);
+        margin: 56px 0 96px;
+        background: var(--surface);
+      }
+      .tool .mark {
+        border-right: 1px solid var(--border);
+        display: grid;
+        place-items: center;
+        padding: 32px;
+      }
+      .tool .copy {
+        padding: 36px 40px;
+      }
+      .tool h2 {
+        font-stretch: 125%;
+        font-size: 32px;
+        font-weight: 800;
+      }
+      .tool p {
+        margin-top: 10px;
+        color: var(--muted);
+        max-width: 36em;
+      }
+      .stamp {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 4px 10px;
+        border: 1.5px solid var(--accent);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 600;
+        transform: rotate(-2deg);
+      }
+
+      @media (max-width: 760px) {
+        nav a {
+          display: none;
+        }
+        .titleblock {
+          grid-template-columns: 1fr 1fr;
+        }
+        .titleblock div:nth-child(3) {
+          border-left: 0;
+        }
+        .tool {
+          grid-template-columns: 1fr;
+        }
+        .tool .mark {
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+        }
+        .drawing {
+          padding: 40px 16px 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a class="brand" href="#">Codeprint</a>
+        <nav aria-label="Primary">
+          <a href="#">Trace</a><a href="#">Snapshot</a
+          ><a href="#">Fingerprint</a><a href="#">Blueprint</a
+          ><button class="toggle" type="button" id="theme">
+            Theme: system
+          </button>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <h1>The fingerprint of code.</h1>
+        <p class="sub">
+          Trace a snippet back to its source, even after the variables were
+          renamed. Then turn code into something worth sharing.
+        </p>
+        <div class="ctas">
+          <a class="btn primary" href="#">Trace a snippet</a
+          ><a class="btn" href="#">View on GitHub</a>
+        </div>
+
+        <figure
+          class="sheet"
+          aria-label="A line of code drawn as a technical drawing, with each identifier measured and labelled as a placeholder"
+        >
+          <div class="drawing">
+            <svg viewBox="0 0 880 170" role="img">
+              <text class="code" x="20" y="96" xml:space="preserve">
+                const total = items.reduce((sum, n) =&gt; sum + n, 0);
+              </text>
+              <!-- dimension lines: one per identifier, staggered so the drawing builds left to right -->
+              <g id="dims"></g>
+            </svg>
+          </div>
+          <div class="titleblock">
+            <div>
+              <span>Drawing</span><strong>Normalized token stream</strong>
+            </div>
+            <div><span>Identifiers</span><strong>5 → ID</strong></div>
+            <div><span>Literals</span><strong>1 → NUM</strong></div>
+            <div><span>Sheet</span><strong>1 of 4</strong></div>
+          </div>
+        </figure>
+      </section>
+
+      <article class="tool">
+        <div class="mark" aria-hidden="true">
+          <svg
+            width="96"
+            height="96"
+            viewBox="0 0 96 96"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <circle cx="48" cy="48" r="40" />
+            <circle cx="48" cy="48" r="26" />
+            <path d="M8 48h80M48 8v80" />
+            <circle cx="48" cy="48" r="4" fill="currentColor" />
+          </svg>
+        </div>
+        <div class="copy">
+          <h2>Trace</h2>
+          <p>
+            Paste a snippet. Codeprint finds public repositories with the same
+            code, even when every identifier was renamed, and ranks them by
+            similarity.
+          </p>
+          <span class="stamp">Coming in Phase 2</span>
+        </div>
+      </article>
+    </div>
+
+    <script>
+      // Measure each identifier in the rendered line and draw a dimension line above it.
+      const ns = "http://www.w3.org/2000/svg";
+      const codeEl = document.querySelector(".code");
+      const dims = document.getElementById("dims");
+      const line = codeEl.textContent;
+      const targets = [
+        ["total", "ID"],
+        ["items", "ID"],
+        ["reduce", "ID"],
+        ["sum", "ID"],
+        ["n", "ID"],
+        ["sum", "ID"],
+        ["n", "ID"],
+        ["0", "NUM"],
+      ];
+      function place() {
+        dims.innerHTML = "";
+        let from = 0;
+        targets.forEach(([word, label], i) => {
+          const re = new RegExp(`\\b${word}\\b`, "g");
+          re.lastIndex = from;
+          const m = re.exec(line);
+          if (!m) return;
+          from = m.index + word.length;
+          const a = codeEl.getExtentOfChar(m.index),
+            b = codeEl.getExtentOfChar(m.index + word.length - 1);
+          const x1 = a.x,
+            x2 = b.x + b.width,
+            up = i % 2 === 0;
+          const y = up ? 52 : 132,
+            tick = up ? 70 : 112;
+          const d = `M${x1},${tick} V${y} M${x2},${tick} V${y} M${x1},${y} H${x2}`;
+          const len = x2 - x1 + 2 * Math.abs(tick - y);
+          const delay = `${0.25 + i * 0.18}s`;
+          const p = document.createElementNS(ns, "path");
+          p.setAttribute("d", d);
+          p.setAttribute("class", "dim draw");
+          p.style.setProperty("--len", len);
+          p.style.setProperty("--d", delay);
+          const t = document.createElementNS(ns, "text");
+          t.setAttribute("x", (x1 + x2) / 2);
+          t.setAttribute("y", up ? y - 8 : y + 18);
+          t.setAttribute("text-anchor", "middle");
+          t.setAttribute("class", "dim-label fade");
+          t.style.setProperty("--d", delay);
+          t.textContent = label;
+          dims.append(p, t);
+        });
+      }
+      document.fonts.ready.then(place);
+      const btn = document.getElementById("theme");
+      const modes = ["system", "light", "dark"];
+      btn.onclick = () => {
+        const next =
+          modes[(modes.indexOf(btn.textContent.split(": ")[1]) + 1) % 3];
+        btn.textContent = "Theme: " + next;
+        next === "system"
+          ? document.documentElement.removeAttribute("data-theme")
+          : (document.documentElement.dataset.theme = next);
+      };
+    </script>
+  </body>
+</html>
