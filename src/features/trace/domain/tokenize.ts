@@ -154,3 +154,5 @@ function stringEnd(source: string, start: number, quote: string): number {
   }
   return source.length;
 }
+
+export { detectLanguage } from "./detect-language";
