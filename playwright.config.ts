@@ -21,5 +21,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: { CODEPRINT_E2E_MOCKS: "1" },
   },
 });

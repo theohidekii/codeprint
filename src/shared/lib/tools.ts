@@ -18,7 +18,7 @@ export const tools: readonly Tool[] = [
     tagline: "Find where a snippet came from.",
     description:
       "Paste a snippet and find public repositories with the same code, even when every identifier was renamed, ranked by similarity.",
-    status: "coming-soon",
+    status: "available",
     phase: 2,
   },
   {

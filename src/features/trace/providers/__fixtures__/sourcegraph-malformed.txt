@@ -1,0 +1,18 @@
+event: matches
+data: [{"type":"content","repository":"github.com/acme/utils","path":"src/timing.js","commit":"abc123","repoStars":12}]
+
+event: matches
+data: {not json
+
+event: matches
+data: [{"type":"content","path":"src/missing-repo.js","commit":"def456"}]
+
+event: matches
+data: [{"type":"content","repository":"gitlab.com/acme/other","path":"a.js","commit":"0f0f0f","repoStars":3}]
+
+event: matches
+data: [{"type":"repo","repository":"github.com/acme/repo-only"}]
+
+event: done
+data: {}
+
