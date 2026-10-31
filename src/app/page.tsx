@@ -1,10 +1,7 @@
-import { ThemeToggle } from "@/shared/ui/theme-toggle";
-
 export default function Home() {
   return (
-    <main>
-      <h1>Codeprint</h1>
-      <ThemeToggle />
-    </main>
+    <section className="mx-auto w-full max-w-[1180px] px-4 py-14 sm:px-6">
+      <h1 className="text-hero font-black">The fingerprint of code.</h1>
+    </section>
   );
 }
