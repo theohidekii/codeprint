@@ -129,23 +129,31 @@ describe("sourcegraph provider", () => {
 
   it("keeps the hits that arrived before the request was cut off", async () => {
     const first = fixture("sourcegraph-malformed.txt").split("\n\n")[0]!;
-    server.use(
-      http.get(ENDPOINT, () => {
-        const stream = new ReadableStream<Uint8Array>({
-          start(controller) {
-            // One complete event, then the search keeps running and never finishes.
-            controller.enqueue(new TextEncoder().encode(`${first}\n\n`));
-          },
-        });
-        return new HttpResponse(stream, {
-          headers: { "content-type": "text/event-stream" },
-        });
-      }),
-    );
+    // A fake fetch rather than MSW: undici and MSW's mocked socket trip over an abort while a
+    // body is still streaming. This fake behaves like the network: the body errors on abort.
+    const streamingFetch: typeof fetch = async (_, init) => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(`${first}\n\n`));
+          init!.signal!.addEventListener("abort", () =>
+            controller.error(new DOMException("aborted", "AbortError")),
+          );
+        },
+      });
+      return new Response(stream, {
+        headers: { "content-type": "text/event-stream" },
+      });
+    };
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 100);
+    setTimeout(() => controller.abort(), 50);
 
-    const hits = await search(regexQuery, "javascript", controller.signal);
+    const hits = await createSourcegraphProvider({
+      fetch: streamingFetch,
+    }).search(regexQuery, {
+      language: "javascript",
+      limit: 5,
+      signal: controller.signal,
+    });
 
     expect(hits).toEqual([
       {

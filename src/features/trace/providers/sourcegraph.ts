@@ -91,6 +91,7 @@ export function createSourcegraphProvider(
       url.searchParams.set("q", buildQuery(query, searchOptions));
 
       const hits: SearchHit[] = [];
+      let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
       try {
         const response = await fetcher(url, {
           headers: { accept: "text/event-stream" },
@@ -100,7 +101,7 @@ export function createSourcegraphProvider(
         if (error) throw error;
         if (!response.body) return hits;
 
-        const reader = response.body.getReader();
+        reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         while (true) {
@@ -116,6 +117,9 @@ export function createSourcegraphProvider(
       } catch (error) {
         if (searchOptions.signal.aborted && hits.length > 0) return hits;
         throw toProviderError(error, "sourcegraph");
+      } finally {
+        // Release the connection when we stop early instead of leaving it half-read.
+        reader?.cancel().catch(() => {});
       }
     },
   };
