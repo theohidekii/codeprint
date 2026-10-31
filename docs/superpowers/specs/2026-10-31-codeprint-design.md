@@ -1,12 +1,12 @@
 # Codeprint — Design
 
 - **Date:** 2026-10-31
-- **Status:** Draft, awaiting approval
+- **Status:** Approved 2026-10-31
 - **Owner:** Theo Hideki
 
 ## 1. Intent
 
-Codeprint is a portfolio project, built to be shown in a portfolio and announced in a LinkedIn post. There are no paying users and no deadline. It succeeds if someone opens the live link, gets it in five seconds, tries it, and remembers it, and if a developer who opens the repository sees clean, tested, well-documented code.
+Codeprint is a portfolio project, built to be shown in a portfolio and announced in a LinkedIn post. There are no paying users and no deadline. It succeeds if someone watching the demo (README GIF, LinkedIn video) gets it in five seconds and remembers it, if it runs locally with one command, and if a developer who opens the repository sees clean, tested, well-documented code.
 
 The theme that ties it together is **the fingerprint of code**. The name and the visual identity come from that: a forensic, investigative look where code is evidence and Codeprint is the lab.
 
@@ -31,7 +31,7 @@ The tool names are the builder's call and can change.
 - Clean, organized, professional code with pure domain logic separated from UI and I/O.
 - All code, comments, docs and commits in **English**.
 - A public GitHub repository with a strong README (demo GIF, architecture, how the matching works) and CI.
-- Deployed live so the post can link to it.
+- Runs locally with `pnpm install && pnpm dev`. **Not deployed** (owner's decision). The post links to the repository and shows a recorded demo.
 
 **Non-goals**
 - User accounts, persistence, history, payments.
@@ -70,7 +70,6 @@ Each phase after Foundation gets its own short design pass and plan when it star
 | E2E | Playwright |
 | Lint and format | ESLint + Prettier, enforced in CI |
 | CI | GitHub Actions: lint, typecheck, unit, e2e, build |
-| Deploy | Vercel |
 | Commits | Conventional Commits |
 
 ## 6. Architecture
@@ -162,7 +161,7 @@ Exact fonts, palette and components are the builder's call, guided by the fronte
 
 ## 11. Documentation
 
-- `README.md`: pitch, live link, demo GIF, features, how Trace's matching works (with a diagram), architecture, local setup, testing, and the limits of the approach.
+- `README.md`: pitch, demo GIF and screenshots, features, how Trace's matching works (with a diagram), architecture, local setup, testing, and the limits of the approach.
 - `CONTRIBUTING.md`: conventions, TDD workflow, commit style.
 - `docs/`: this design, per-phase designs and plans, ADRs for notable decisions.
 - `.env.example`: every variable documented.
@@ -185,5 +184,4 @@ Exact fonts, palette and components are the builder's call, guided by the fronte
 ## 14. Needs the owner later
 
 - A GitHub personal access token (read-only, public scope) for the server's env, at the Trace phase.
-- Connecting the repo to a Vercel account for deploy, at the end of Foundation.
 - Reacting to the UI mockups before the design system is locked.
