@@ -1,7 +1,7 @@
 export function SiteFooter() {
   return (
-    <footer className="border-border text-muted mx-auto mt-auto w-full max-w-[1180px] border-t px-4 py-8 text-sm sm:px-6">
-      <div className="flex flex-col justify-between gap-2 sm:flex-row">
+    <footer className="mx-auto mt-auto w-full max-w-[1180px] px-4 sm:px-6">
+      <div className="border-border text-muted flex flex-col justify-between gap-2 border-t py-8 text-sm sm:flex-row">
         <p>Codeprint is an open-source portfolio project.</p>
         <a
           href="https://github.com/theohidekii/codeprint"

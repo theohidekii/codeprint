@@ -82,3 +82,22 @@
     @apply outline-accent rounded-sm outline-2 outline-offset-3;
   }
 }
+
+/* The one orchestrated moment: the hero print develops from its core outward. */
+@keyframes develop {
+  from {
+    transform: scale(0);
+  }
+}
+
+.develop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: develop 2.2s cubic-bezier(0.33, 1, 0.68, 1) 0.3s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .develop {
+    animation: none;
+  }
+}
