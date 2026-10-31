@@ -81,6 +81,20 @@ describe("sourcegraph provider", () => {
     expect(q).not.toContain("lang:");
   });
 
+  it("quotes literal patterns so words like `and` or `repo:` stay literal", async () => {
+    const requests = serve(fixture("sourcegraph-matches.txt"));
+
+    await search({
+      kind: "exact",
+      pattern: String.raw`if a and not b: say("hi\n") repo:x`,
+      regex: false,
+    });
+
+    expect(requests[0]!.searchParams.get("q")).toContain(
+      String.raw`content:"if a and not b: say(\"hi\\n\") repo:x"`,
+    );
+  });
+
   it("parses hits from a recorded response", async () => {
     serve(fixture("sourcegraph-matches.txt"));
 

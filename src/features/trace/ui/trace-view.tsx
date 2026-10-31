@@ -27,15 +27,18 @@ function isMac(): boolean {
 export function TraceView() {
   const [code, setCode] = useState("");
   const [choice, setChoice] = useState<LanguageChoice>("auto");
+  // Results describe the code as it was traced, so comparisons use that copy, not live edits.
+  const [traced, setTraced] = useState("");
   const { state, results, providers, error, trace } = useTrace();
   const hydrated = useHydrated();
 
   const detected = useMemo(() => detectLanguage(code), [code]);
-  const snippetLines = useMemo(() => code.split("\n"), [code]);
+  const snippetLines = useMemo(() => traced.split("\n"), [traced]);
   const canTrace = code.trim().length > 0 && state !== "tracing";
 
   const submit = () => {
     if (!canTrace) return;
+    setTraced(code);
     trace(choice === "auto" ? { code } : { code, language: choice });
   };
 

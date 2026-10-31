@@ -57,7 +57,7 @@ describe("github provider", () => {
 
     const url = new URL(seen!.url);
     expect(url.searchParams.get("q")).toBe(
-      "clearTimeout(timer); language:javascript",
+      '"clearTimeout(timer);" language:javascript',
     );
     expect(url.searchParams.get("per_page")).toBe("10");
     expect(seen!.headers.get("authorization")).toBe("Bearer test-token");

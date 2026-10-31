@@ -234,6 +234,80 @@ describe("runTrace", () => {
     expect(events.filter((e) => e.type === "result")).toHaveLength(1);
   });
 
+  it("starts no new downloads once the caller aborts", async () => {
+    const controller = new AbortController();
+    let started = 0;
+    const many = Array.from({ length: 20 }, (_, i) => hit(`file${i}.js`));
+    const trace = runTrace(
+      { code: SUM_POSITIVE },
+      {
+        providers: [provider({ hits: many })],
+        fetchContent: (_, { signal }) => {
+          started++;
+          return new Promise((resolve) => {
+            signal.addEventListener("abort", () => resolve(null));
+            setTimeout(() => resolve(null), 200);
+          });
+        },
+      },
+      controller.signal,
+    );
+
+    await trace.next(); // started
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    controller.abort();
+    await trace.next();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(started).toBeLessThanOrEqual(FETCH_CONCURRENCY);
+  });
+
+  it("starts no new downloads when aborted mid-flight", async () => {
+    const controller = new AbortController();
+    let started = 0;
+    const many = Array.from({ length: 20 }, (_, i) => hit(`file${i}.js`));
+    const trace = runTrace(
+      { code: SUM_POSITIVE },
+      {
+        providers: [provider({ hits: many })],
+        fetchContent: (_, { signal }) => {
+          started++;
+          return new Promise((resolve) => {
+            signal.addEventListener("abort", () => resolve(null));
+            setTimeout(() => resolve(null), 200);
+          });
+        },
+      },
+      controller.signal,
+    );
+
+    await trace.next(); // started
+    const pending = trace.next(); // downloads begin
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    controller.abort();
+    await pending;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(started).toBe(FETCH_CONCURRENCY);
+  });
+
+  it("still finishes when scoring a candidate fails", async () => {
+    const events = await run({
+      providers: [provider({ hits: [hit("broken.js"), hit("match.js")] })],
+      // Content that blows up when read makes scoring throw.
+      fetchContent: async (h) =>
+        h.path === "broken.js"
+          ? ({
+              get length(): number {
+                throw new Error("unreadable");
+              },
+            } as unknown as string)
+          : CONTENT[h.path]!,
+    });
+
+    expect(events.at(-1)).toEqual({ type: "done", total: 1 });
+  });
+
   it("keeps the partial hits of a provider that answers when cut off", async () => {
     const events = await run({
       providers: [

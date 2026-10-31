@@ -1,10 +1,10 @@
+import { createHash } from "node:crypto";
+
 import { z } from "zod";
 
 import { env } from "@/env";
-import { normalize } from "@/features/trace/domain/normalize";
-import { detectLanguage, tokenize } from "@/features/trace/domain/tokenize";
+import { detectLanguage } from "@/features/trace/domain/tokenize";
 import { LANGUAGES } from "@/features/trace/domain/types";
-import { fnv1a } from "@/features/trace/domain/winnow";
 import { fetchFileContent } from "@/features/trace/providers/content";
 import { createGithubProvider } from "@/features/trace/providers/github";
 import { createSourcegraphProvider } from "@/features/trace/providers/sourcegraph";
@@ -64,10 +64,9 @@ export async function POST(request: Request): Promise<Response> {
 
   const { code } = body.data;
   const language = body.data.language ?? detectLanguage(code);
-  const fingerprint = normalize(tokenize(code, language))
-    .map((t) => t.value)
-    .join("\u0000");
-  const key = `${language}:${fnv1a(fingerprint)}`;
+  // Keyed on the exact code: results carry the snippet's own names and line numbers,
+  // so two snippets that merely normalize alike must never share a cached trace.
+  const key = `${language}:${createHash("sha256").update(code).digest("hex")}`;
 
   const cached = cache.get(key);
   const events = cached

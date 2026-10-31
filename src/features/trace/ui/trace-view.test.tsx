@@ -164,6 +164,25 @@ describe("TraceView", () => {
     );
   });
 
+  it("compares results with the code that was traced, even after editing", async () => {
+    const { rerender } = render(<TraceView />);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Try an example" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Trace" }));
+    const editor = screen.getByRole("textbox", { name: "Code snippet" });
+    await userEvent.clear(editor);
+    await userEvent.type(editor, "edited afterwards");
+
+    hook = { ...base, state: "done", results: [aResult] };
+    rerender(<TraceView />);
+    await userEvent.click(screen.getByRole("button", { name: "Compare" }));
+
+    expect(
+      screen.getByRole("region", { name: "Your snippet" }),
+    ).toHaveTextContent("function debounce(fn, ms)");
+  });
+
   it("lists results as cards", () => {
     hook = { ...base, state: "done", results: [aResult] };
     render(<TraceView />);

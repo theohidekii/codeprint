@@ -49,6 +49,25 @@ describe("fetchFileContent", () => {
     expect(await fetchContent()).toBeNull();
   });
 
+  it("stops downloading once the size cap is passed", async () => {
+    // No content-length and a body that never ends: reading it all would hang forever.
+    const endless: typeof fetch = async () =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          pull(controller) {
+            controller.enqueue(new Uint8Array(64 * 1024).fill(120));
+          },
+        }),
+      );
+
+    expect(
+      await fetchFileContent(hit, {
+        signal: new AbortController().signal,
+        fetch: endless,
+      }),
+    ).toBeNull();
+  });
+
   it("returns null for binary content", async () => {
     server.use(http.get(RAW, () => HttpResponse.text("PNG\u0000\u0001data")));
 

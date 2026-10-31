@@ -7,6 +7,9 @@ export interface SearchQuery {
 }
 
 const MIN_EXACT_LINE = 20;
+/** GitHub code search rejects queries over 256 characters. */
+const MAX_EXACT_CHARS = 200;
+const MAX_STRUCTURAL_TOKENS = 40;
 const STRUCTURAL_LINES = 3;
 const MIN_ANCHOR_STRING = 6;
 const MIN_ANCHOR_MEMBER = 5;
@@ -48,7 +51,7 @@ function exactLine(source: string): string | null {
     if (line.length >= MIN_EXACT_LINE && line.length > (best?.length ?? 0))
       best = line;
   }
-  return best;
+  return best?.slice(0, MAX_EXACT_CHARS) ?? null;
 }
 
 function tokenPattern(token: Token): string {
@@ -90,8 +93,16 @@ function structuralPattern(tokens: Token[]): string | null {
     }
   }
 
+  // Long patterns are slow to search and can exceed URL limits; a prefix still matches.
+  let budget = MAX_STRUCTURAL_TOKENS;
   return groups
     .slice(bestStart, bestStart + size)
+    .map((line) => {
+      const group = line.slice(0, Math.max(0, budget));
+      budget -= group.length;
+      return group;
+    })
+    .filter((group) => group.length > 0)
     .map((group) =>
       group
         .map((token, i) => {

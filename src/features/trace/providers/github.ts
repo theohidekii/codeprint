@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   ProviderError,
+  quoted,
   type SearchHit,
   type SearchProvider,
   statusError,
@@ -35,8 +36,8 @@ export function createGithubProvider(options: {
       url.searchParams.set(
         "q",
         language === "generic"
-          ? query.pattern
-          : `${query.pattern} language:${language}`,
+          ? quoted(query.pattern)
+          : `${quoted(query.pattern)} language:${language}`,
       );
       url.searchParams.set("per_page", String(limit));
 

@@ -90,6 +90,21 @@ describe("useTrace", () => {
     expect(hook.current.providers).toEqual({ sourcegraph: "ok" });
   });
 
+  it("reports an interrupted trace when the stream ends without finishing", async () => {
+    serveInTwoParts(
+      [{ type: "started", language: "javascript", queries: 2 }],
+      [],
+    )();
+    const { result: hook } = renderHook(() => useTrace());
+
+    act(() => hook.current.trace({ code: "x" }));
+
+    await waitFor(() => expect(hook.current.state).toBe("error"));
+    expect(hook.current.error).toBe(
+      "The trace stopped before it finished. Try again.",
+    );
+  });
+
   it("surfaces a too-short error", async () => {
     const message =
       "This snippet is too short to trace. Paste a few lines, at least 20 tokens.";

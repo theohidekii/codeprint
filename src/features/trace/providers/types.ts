@@ -64,3 +64,8 @@ export function statusError(
     return new ProviderError("error", `${provider} answered ${status}`);
   return null;
 }
+
+/** Wraps text in double quotes for a search query, escaping backslashes and quotes. */
+export function quoted(text: string): string {
+  return `"${text.replace(/[\\"]/g, "\\$&")}"`;
+}

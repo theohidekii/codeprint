@@ -91,6 +91,32 @@ describe("buildQueries", () => {
     ]);
   });
 
+  it("caps the exact query at 200 characters", () => {
+    const long = `const x = [${Array.from({ length: 400 }, (_, i) => i).join(", ")}];`;
+    const [exact] = byKind(long, "exact");
+
+    expect(exact!.pattern.length).toBeLessThanOrEqual(200);
+    expect(long).toContain(exact!.pattern);
+  });
+
+  it("caps the structural query at 40 tokens and still matches the source", () => {
+    const long = `const x = [${Array.from({ length: 400 }, (_, i) => i).join(", ")}];`;
+    const [structural] = byKind(long, "structural");
+
+    expect(structural!.pattern.length).toBeLessThan(600);
+    expect(new RegExp(structural!.pattern).test(long)).toBe(true);
+  });
+
+  it("never puts literal whitespace in the structural query", () => {
+    // Search engines split queries on whitespace into operators and filters.
+    const [structural] = byKind(
+      'if (a and not b) { log("count: 5 repo:x"); }',
+      "structural",
+    );
+
+    expect(structural!.pattern).not.toMatch(/\s/);
+  });
+
   it("orders queries exact, structural, then anchors", () => {
     const kinds = build(
       'const message = format("hello there", name);\nsend(message.trimmed);',

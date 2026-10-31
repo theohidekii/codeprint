@@ -97,4 +97,25 @@ describe("POST /api/trace", () => {
     expect(searches).toBe(afterFirst);
     expect(second).toEqual(first);
   });
+
+  it("never serves one snippet's cached trace for a different snippet", async () => {
+    let searches = 0;
+    server.use(
+      http.get("https://sourcegraph.com/.api/search/stream", () => {
+        searches++;
+        return undefined;
+      }),
+    );
+    const { POST } = await loadRoute();
+    // Same structure, different names: identical once normalized.
+    const renamed = EXAMPLE_SNIPPET.code
+      .replaceAll("debounce", "throttle")
+      .replaceAll("timer", "handle");
+
+    await events(await POST(post({ code: EXAMPLE_SNIPPET.code })));
+    const afterFirst = searches;
+    await events(await POST(post({ code: renamed })));
+
+    expect(searches).toBeGreaterThan(afterFirst);
+  });
 });

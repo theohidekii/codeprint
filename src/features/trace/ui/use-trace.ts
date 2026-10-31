@@ -13,6 +13,7 @@ const INVALID_MESSAGE =
   "This snippet couldn't be traced. Keep it under 20,000 characters and try again.";
 const NETWORK_MESSAGE =
   "Trace couldn't reach the server. Check your connection and try again.";
+const INTERRUPTED_MESSAGE = "The trace stopped before it finished. Try again.";
 
 interface Snapshot {
   state: TraceState;
@@ -104,9 +105,15 @@ export function useTrace() {
           }));
           return;
         }
+        let finished = false;
         for await (const line of readLines(response.body)) {
           const event = JSON.parse(line) as TraceEvent;
+          finished ||= event.type === "done" || event.type === "error";
           update((s) => apply(s, event));
+        }
+        // A stream that ends without done or error was cut short; never leave the UI tracing.
+        if (!finished) {
+          update((s) => ({ ...s, state: "error", error: INTERRUPTED_MESSAGE }));
         }
       } catch {
         update((s) => ({ ...s, state: "error", error: NETWORK_MESSAGE }));

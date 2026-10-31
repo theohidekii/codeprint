@@ -5,6 +5,7 @@ import {
   type SearchHit,
   type SearchOptions,
   type SearchProvider,
+  quoted,
   statusError,
   toProviderError,
 } from "./types";
@@ -25,7 +26,9 @@ function buildQuery(
 ): string {
   return [
     "context:global",
-    query.pattern,
+    // Literal text is quoted so words such as `and` or `repo:` are not read as operators.
+    // Structural patterns never contain whitespace, so they are safe unquoted.
+    query.regex ? query.pattern : `content:${quoted(query.pattern)}`,
     `patterntype:${query.regex ? "regexp" : "literal"}`,
     language === "generic" ? null : `lang:${language}`,
     `count:${limit}`,

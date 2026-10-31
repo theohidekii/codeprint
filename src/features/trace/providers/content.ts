@@ -21,11 +21,42 @@ export async function fetchFileContent(
     if (Number(response.headers.get("content-length") ?? 0) > MAX_FILE_BYTES) {
       return null;
     }
-    const text = await response.text();
-    if (text.length > MAX_FILE_BYTES) return null;
+    const text = await readCapped(response, MAX_FILE_BYTES);
+    if (text === null) return null;
     if (text.slice(0, BINARY_SNIFF_LENGTH).includes("\u0000")) return null;
     return text;
   } catch {
     return null;
   }
+}
+
+/**
+ * Reads a body as text, giving up (and closing the connection) once it passes `maxBytes`.
+ * The declared length can be missing or describe the compressed size, so it is not trusted.
+ */
+async function readCapped(
+  response: Response,
+  maxBytes: number,
+): Promise<string | null> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
 }

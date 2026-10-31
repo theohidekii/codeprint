@@ -54,6 +54,7 @@ async function withTimeout<T>(
   ms: number,
   task: (signal: AbortSignal) => Promise<T>,
 ): Promise<T> {
+  if (parent.aborted) throw new ProviderError("timeout", "request aborted");
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   let grace: ReturnType<typeof setTimeout> | undefined;
@@ -173,6 +174,8 @@ export async function* runTrace(
   const timeoutMs = deps.timeoutMs ?? PROVIDER_TIMEOUT_MS;
   const controller = new AbortController();
   const stop = () => controller.abort();
+  // The caller may have aborted while we were paused at `started`.
+  if (signal.aborted) stop();
   signal.addEventListener("abort", stop);
 
   const channel = createChannel<TraceEvent>();
@@ -185,6 +188,8 @@ export async function* runTrace(
   let total = 0;
 
   const pump = () => {
+    // Once the trace is aborted, queued candidates are never downloaded.
+    if (controller.signal.aborted) return;
     while (active < FETCH_CONCURRENCY && waiting.length > 0) {
       const hit = waiting.shift()!;
       active++;
@@ -200,6 +205,8 @@ export async function* runTrace(
               channel.push({ type: "result", result });
             }
           })
+          // One unscorable file is skipped; it must not stop the trace from finishing.
+          .catch(() => {})
           .finally(() => {
             active--;
             pump();
