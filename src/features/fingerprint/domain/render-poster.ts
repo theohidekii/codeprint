@@ -2,7 +2,12 @@ import type { SnapshotTheme } from "@/features/snapshot/domain/themes";
 import type { EmbeddedFonts } from "@/shared/lib/export/fonts";
 import { escapeXml, fontFaces } from "@/shared/lib/svg";
 
-import { LEGEND_FONT_SIZE, type PosterModel, RING_RADIUS } from "./poster";
+import {
+  FACT_GAP,
+  LEGEND_FONT_SIZE,
+  type PosterModel,
+  RING_RADIUS,
+} from "./poster";
 
 const SANS = "'Schibsted Grotesk', ui-sans-serif, sans-serif";
 const RIDGE_WIDTH = 3;
@@ -36,7 +41,7 @@ function print(model: PosterModel, theme: SnapshotTheme): string {
 
 function text(model: PosterModel, theme: SnapshotTheme): string {
   const { title, factsAt } = model;
-  const line = model.note ?? model.facts.join("     ");
+  const line = model.note ?? model.facts.join(FACT_GAP);
   const legend = model.legend
     .map(
       (item) =>

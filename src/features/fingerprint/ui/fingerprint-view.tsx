@@ -54,7 +54,7 @@ export function FingerprintView() {
   const [size, setSize] = useState<PosterSize>("portrait");
   const [fonts, setFonts] = useState<EmbeddedFonts | null>(null);
   const [status, setStatus] = useState("");
-  const { state, profile, error, generate } = useFingerprint();
+  const { state, profile, error, generate, reset } = useFingerprint();
 
   useEffect(() => {
     if (!profile || fonts) return;
@@ -79,6 +79,7 @@ export function FingerprintView() {
     const clean = value.trim();
     setStatus("");
     if (!isValidTarget(clean)) {
+      reset();
       setInvalid(true);
       return;
     }
@@ -203,7 +204,7 @@ export function FingerprintView() {
             />
           ) : (
             <div className="text-muted grid aspect-[4/5] place-items-center text-sm">
-              {state === "loading" ? (
+              {state === "loading" || profile ? (
                 <ScanningPrint className="h-64 w-auto" />
               ) : (
                 <div className="grid justify-items-center gap-4">

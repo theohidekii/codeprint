@@ -52,7 +52,8 @@ async function call(
     const exhausted =
       response.status === 429 ||
       (response.status === 403 &&
-        response.headers.get("x-ratelimit-remaining") === "0");
+        (response.headers.get("x-ratelimit-remaining") === "0" ||
+          response.headers.has("retry-after")));
     if (exhausted) throw new ProfileError("rate-limited");
     if (!response.ok) return { status: response.status, body: null };
     return { status: response.status, body: await response.json() };
@@ -71,8 +72,25 @@ async function required(path: string, deps: Deps): Promise<unknown> {
 }
 
 /** Later requests only add detail: without them the poster is simply plainer. */
-async function optional(path: string, deps: Deps): Promise<unknown> {
-  return (await call(path, deps)).body;
+async function optional(
+  path: string,
+  deps: Deps,
+  gaps: { partial: boolean },
+): Promise<unknown> {
+  const { status, body } = await call(path, deps);
+  // 404 and 409 are real answers (an empty repository); anything else may pass.
+  if (body === null && status !== 404 && status !== 409) gaps.partial = true;
+  return body;
+}
+
+/** An aborted request must not pass for an account with no activity. */
+function finish(
+  profile: Profile,
+  gaps: { partial: boolean },
+  deps: Deps,
+): Profile {
+  if (deps.signal?.aborted) throw new ProfileError("unavailable");
+  return gaps.partial ? { ...profile, partial: true } : profile;
 }
 
 /** The items of a list that match the schema. Anything else is dropped, never fatal. */
@@ -97,9 +115,10 @@ async function fetchUser(user: string, deps: Deps): Promise<Profile> {
   const account = userSchema.safeParse(await required(`/users/${user}`, deps));
   if (!account.success) throw new ProfileError("unavailable");
 
+  const gaps = { partial: false };
   const [repoBody, eventBody] = await Promise.all([
-    optional(`/users/${user}/repos?per_page=100&sort=pushed`, deps),
-    optional(`/users/${user}/events/public?per_page=100`, deps),
+    optional(`/users/${user}/repos?per_page=100&sort=pushed`, deps, gaps),
+    optional(`/users/${user}/events/public?per_page=100`, deps, gaps),
   ]);
 
   const repos = items(repoBody, userRepoSchema).filter((repo) => !repo.fork);
@@ -110,19 +129,23 @@ async function fetchUser(user: string, deps: Deps): Promise<Profile> {
     }
   }
 
-  return {
-    kind: "user",
-    name: account.data.login,
-    languages: topLanguages(weights),
-    ...summarizeTimestamps(
-      items(eventBody, eventSchema).map((event) => event.created_at),
-    ),
-    sizes: {
-      count: repos.length,
-      median: median(repos.map((repo) => repo.size)),
+  return finish(
+    {
+      kind: "user",
+      name: account.data.login,
+      languages: topLanguages(weights),
+      ...summarizeTimestamps(
+        items(eventBody, eventSchema).map((event) => event.created_at),
+      ),
+      sizes: {
+        count: repos.length,
+        median: median(repos.map((repo) => repo.size)),
+      },
+      stars: repos.reduce((sum, repo) => sum + repo.stargazers_count, 0),
     },
-    stars: repos.reduce((sum, repo) => sum + repo.stargazers_count, 0),
-  };
+    gaps,
+    deps,
+  );
 }
 
 const repoSchema = z.object({
@@ -142,29 +165,34 @@ async function fetchRepo(target: string, deps: Deps): Promise<Profile> {
   if (!repo.success) throw new ProfileError("unavailable");
   const branch = encodeURIComponent(repo.data.default_branch);
 
+  const gaps = { partial: false };
   const [languageBody, commitBody, treeBody] = await Promise.all([
-    optional(`/repos/${target}/languages`, deps),
-    optional(`/repos/${target}/commits?per_page=100`, deps),
-    optional(`/repos/${target}/git/trees/${branch}?recursive=1`, deps),
+    optional(`/repos/${target}/languages`, deps, gaps),
+    optional(`/repos/${target}/commits?per_page=100`, deps, gaps),
+    optional(`/repos/${target}/git/trees/${branch}?recursive=1`, deps, gaps),
   ]);
 
   const languages = languagesSchema.safeParse(languageBody);
   const tree = treeSchema.safeParse(treeBody);
   const blobs = tree.success ? items(tree.data.tree, blobSchema) : [];
 
-  return {
-    kind: "repo",
-    name: repo.data.full_name,
-    languages: topLanguages(languages.success ? languages.data : {}),
-    ...summarizeTimestamps(
-      items(commitBody, commitSchema).map((item) => item.commit.author.date),
-    ),
-    sizes: {
-      count: blobs.length,
-      median: median(blobs.map((blob) => blob.size)),
+  return finish(
+    {
+      kind: "repo",
+      name: repo.data.full_name,
+      languages: topLanguages(languages.success ? languages.data : {}),
+      ...summarizeTimestamps(
+        items(commitBody, commitSchema).map((item) => item.commit.author.date),
+      ),
+      sizes: {
+        count: blobs.length,
+        median: median(blobs.map((blob) => blob.size)),
+      },
+      stars: repo.data.stargazers_count,
     },
-    stars: repo.data.stargazers_count,
-  };
+    gaps,
+    deps,
+  );
 }
 
 /**

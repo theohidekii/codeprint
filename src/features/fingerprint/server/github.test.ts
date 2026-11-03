@@ -181,6 +181,59 @@ describe("fetchProfile errors", () => {
     });
   });
 
+  it("treats a secondary rate limit as rate limited", async () => {
+    server.use(
+      http.get(
+        `${API}/users/octo-fixture/repos`,
+        () =>
+          new HttpResponse(null, {
+            status: 403,
+            headers: { "retry-after": "60", "x-ratelimit-remaining": "40" },
+          }),
+      ),
+    );
+
+    await expect(fetchProfile("octo-fixture", {})).rejects.toMatchObject({
+      code: "rate-limited",
+    });
+  });
+
+  it("flags a transient failure as partial, but not an empty repository", async () => {
+    expect((await fetchProfile("octo-fixture", {})).partial).toBeUndefined();
+    server.use(
+      http.get(
+        `${API}/repos/vercel/next.js/commits`,
+        () => new HttpResponse(null, { status: 409 }),
+      ),
+    );
+    expect((await fetchProfile("vercel/next.js", {})).partial).toBeUndefined();
+    server.use(
+      http.get(
+        `${API}/users/octo-fixture/events/public`,
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    expect((await fetchProfile("octo-fixture", {})).partial).toBe(true);
+  });
+
+  it("rejects when the caller aborts, instead of returning a hollow profile", async () => {
+    const controller = new AbortController();
+    const aborting: typeof fetch = async (url) => {
+      if (String(url).endsWith("/users/octo-fixture")) {
+        controller.abort();
+        return HttpResponse.json({ login: "octo-fixture" });
+      }
+      throw new Error("aborted");
+    };
+
+    await expect(
+      fetchProfile("octo-fixture", {
+        fetch: aborting,
+        signal: controller.signal,
+      }),
+    ).rejects.toBeInstanceOf(ProfileError);
+  });
+
   it("reports an unavailable GitHub when the first request fails", async () => {
     server.use(
       http.get(

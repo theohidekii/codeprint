@@ -19,4 +19,4 @@ Fingerprint draws a poster from a GitHub account. It should be shareable art, bu
 
 - Posters are reproducible and fully unit-testable, but activity is only a sample of the latest 100 events or commits.
 - Hours are UTC, because GitHub doesn't reliably expose the author's time zone. The poster says so.
-- Partial profiles are cached for 10 minutes like complete ones.
+- Profiles missing data because of a passing failure are not cached, so a false quiet poster can't stick.

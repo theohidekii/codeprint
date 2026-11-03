@@ -157,6 +157,21 @@ describe("layoutPoster", () => {
     }
   });
 
+  it("shrinks the facts so they stay clear of the print", () => {
+    const model = layout(
+      profile({
+        languages: [{ name: "Common Workflow Language", share: 1 }],
+      }),
+      { size: "landscape" },
+    );
+    const width =
+      model.facts.join("     ").length * model.factsAt.fontSize * 0.6;
+
+    expect(model.factsAt.x + width).toBeLessThanOrEqual(
+      model.print.cx - 240 * model.print.scale,
+    );
+  });
+
   it("lists languages with their colors", () => {
     expect(layout().legend.map((l) => [l.name, l.percent, l.color])).toEqual([
       ["TypeScript", 68, bandColor("latent-dark", 0)],

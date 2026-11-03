@@ -41,6 +41,7 @@ const QUIET_NOTE = "Not much public activity yet.";
 const SANS_CHAR_RATIO = 0.6;
 const MIN_TITLE_SIZE = 22;
 const ELLIPSIS = "…";
+export const FACT_GAP = "     ";
 
 const SIZES: Record<
   PosterSize,
@@ -177,6 +178,11 @@ export function layoutPoster(
     textTop = height - margin - textHeight;
   }
 
+  const facts = factsFor(profile, traits);
+  const factsWidth = facts.join(FACT_GAP).length * SANS_CHAR_RATIO;
+  const factsFontSize =
+    factsWidth > 0 ? Math.min(factsSize, textWidth / factsWidth) : factsSize;
+
   const titleY = textTop + fitted.fontSize * 0.9;
   const factsY = textTop + titleBlock + factsSize * 1.3;
   const legendY = textTop + titleBlock + factsBlock + LEGEND_FONT_SIZE * 1.1;
@@ -195,8 +201,8 @@ export function layoutPoster(
       length: value * MAX_TICK,
     })),
     title: { ...fitted, x: margin, y: titleY },
-    facts: factsFor(profile, traits),
-    factsAt: { x: margin, y: factsY, fontSize: factsSize },
+    facts,
+    factsAt: { x: margin, y: factsY, fontSize: factsFontSize },
     legend: layoutLegend(profile, options.theme, margin, legendY, textWidth)
       .items,
     note: traits.quiet ? QUIET_NOTE : null,

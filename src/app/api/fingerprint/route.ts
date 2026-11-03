@@ -45,7 +45,7 @@ export async function GET(request: Request): Promise<Response> {
       token: env.GITHUB_TOKEN,
       signal: request.signal,
     });
-    cache.set(key, profile);
+    if (!profile.partial) cache.set(key, profile);
     return Response.json(profile);
   } catch (error) {
     const failure =

@@ -232,6 +232,31 @@ describe("FingerprintView", () => {
     expect(await screen.findByText("Copied")).toBeInTheDocument();
   });
 
+  it("clears the old poster when the next name is invalid", async () => {
+    await withPoster();
+
+    await userEvent.clear(input());
+    await userEvent.type(input(), "a/..{Enter}");
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Enter a GitHub username or owner/repo.",
+    );
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("doesn't blame the name for a server failure", async () => {
+    server.use(
+      http.get(ENDPOINT, () => new HttpResponse("oops", { status: 504 })),
+    );
+    render(<FingerprintView />);
+
+    await userEvent.type(input(), "someone{Enter}");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "GitHub didn't respond. Try again shortly.",
+    );
+  });
+
   it("shows nothing to export before a poster exists", () => {
     render(<FingerprintView />);
 

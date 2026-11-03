@@ -20,6 +20,8 @@ export interface Profile {
   stars: number;
   /** How many timestamps the hours and weekdays are based on. */
   sampled: number;
+  /** A request failed for a passing reason, so this isn't the whole picture. */
+  partial?: true;
 }
 
 const TOP_LANGUAGES = 5;

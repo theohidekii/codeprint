@@ -8,6 +8,8 @@ const INVALID_MESSAGE = "Enter a GitHub username or owner/repo.";
 const NETWORK_MESSAGE =
   "Couldn't reach the server. Check your connection and try again.";
 
+const SERVER_MESSAGE = "GitHub didn't respond. Try again shortly.";
+
 export type FingerprintState = "idle" | "loading" | "done" | "error";
 
 interface Snapshot {
@@ -49,7 +51,10 @@ export function useFingerprint() {
           const body = (await response.json().catch(() => null)) as {
             message?: string;
           } | null;
-          fail(body?.message ?? INVALID_MESSAGE);
+          fail(
+            body?.message ??
+              (response.status === 400 ? INVALID_MESSAGE : SERVER_MESSAGE),
+          );
           return;
         }
         finish({
@@ -63,5 +68,10 @@ export function useFingerprint() {
     })();
   }, []);
 
-  return { ...snapshot, generate };
+  const reset = useCallback(() => {
+    controllerRef.current?.abort();
+    setSnapshot({ state: "idle", profile: null, error: null });
+  }, []);
+
+  return { ...snapshot, generate, reset };
 }

@@ -100,6 +100,20 @@ describe("GET /api/fingerprint", () => {
     expect(second).toEqual(first);
   });
 
+  it("doesn't cache a profile with missing data", async () => {
+    server.use(
+      http.get(
+        `${API}/users/octo-fixture/events/public`,
+        () => new HttpResponse(null, { status: 500 }),
+        { once: true },
+      ),
+    );
+    const { GET } = await loadRoute();
+
+    expect((await (await GET(get("octo-fixture"))).json()).sampled).toBe(0);
+    expect((await (await GET(get("octo-fixture"))).json()).sampled).toBe(3);
+  });
+
   it("limits each client to 20 requests a minute", async () => {
     const { GET } = await loadRoute();
     for (let i = 0; i < 20; i++) await GET(get("octo-fixture", "203.0.113.5"));
