@@ -36,7 +36,7 @@ export const tools: readonly Tool[] = [
     tagline: "Generative art from a GitHub profile.",
     description:
       "Enter a GitHub user or repository and get a unique poster drawn from its languages, commit rhythm and active hours.",
-    status: "coming-soon",
+    status: "available",
     phase: 4,
   },
   {

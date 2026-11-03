@@ -14,11 +14,11 @@ describe("tool registry", () => {
     expect(tools.map((tool) => tool.phase)).toEqual([2, 3, 4, 5]);
   });
 
-  it("marks Trace and Snapshot as available and the rest as coming soon", () => {
+  it("marks every tool but Blueprint as available", () => {
     expect(tools.map((tool) => tool.status)).toEqual([
       "available",
       "available",
-      "coming-soon",
+      "available",
       "coming-soon",
     ]);
   });
