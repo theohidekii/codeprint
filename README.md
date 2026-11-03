@@ -26,6 +26,8 @@ Codeprint is a toolkit for investigating code. Paste a snippet and trace it back
 
 ![Trace finding an exact copy of a debounce function in a public repository, with the matching lines highlighted side by side.](docs/assets/trace-dark.png)
 
+![The Trace page: a pasted debounce function above a list of public repositories ranked by similarity.](docs/assets/screen-trace.png)
+
 ### How it works
 
 Search engines match text, so renamed code slips past them. Trace compares structure instead:
@@ -70,6 +72,8 @@ The design is in the [design document](docs/superpowers/specs/2026-10-31-codepri
 
 ![A Snapshot exported at LinkedIn size: a debounce function in the Latent Dark theme, one line highlighted, with a caption below.](docs/assets/snapshot-example.png)
 
+![The Snapshot page: a code editor and style controls beside a live preview of the image.](docs/assets/screen-snapshot.png)
+
 Paste code and export a polished image for a post, a README or a slide. It runs entirely in your browser, and nothing is uploaded.
 
 - **Themes:** Latent Dark, Latent Light, Cyanotype, Paper and Terminal. Every code color passes WCAG AA on its card, and a test checks it.
@@ -84,6 +88,8 @@ The image is an SVG that Codeprint builds itself, from Shiki tokens laid out on 
 ## Fingerprint
 
 ![A poster for vercel/next.js: a whorl-pattern fingerprint colored by language, ringed by a 24-hour activity clock.](docs/assets/fingerprint-example.png)
+
+![The Fingerprint page: theme and size controls beside the generated poster for vercel/next.js.](docs/assets/screen-fingerprint.png)
 
 Enter a GitHub user or `owner/repo` and get a poster drawn from its public activity. The same input always draws the same print.
 
@@ -100,6 +106,8 @@ It works without a token, within GitHub's limit of 60 requests per hour (one pos
 ## Blueprint
 
 ![A floor plan of vercel/swr: rooms sized by code, joined by yellow pipes where modules import each other.](docs/assets/blueprint-example.png)
+
+![The Blueprint page: the vercel/swr repository entered above its generated floor plan.](docs/assets/screen-blueprint.png)
 
 Enter `owner/repo` and get its architecture drawn as a floor plan.
 
