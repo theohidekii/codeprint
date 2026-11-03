@@ -18,6 +18,21 @@ const SOURCE =
 
 const MIN_MODULES = 6;
 const MAX_MODULES = 24;
+/** Folders that only organize code, so their contents are the real modules. */
+const ALWAYS_OPEN = new Set(["src", "lib", "packages", "apps", "app"]);
+/** Supporting code: one room each, however large. */
+const NEVER_OPEN = new Set([
+  "test",
+  "tests",
+  "__tests__",
+  "e2e",
+  "examples",
+  "example",
+  "docs",
+  "fixtures",
+  "bench",
+  "benchmarks",
+]);
 const ROOT = "(root)";
 const OTHER = "(other)";
 
@@ -63,15 +78,26 @@ export function groupModules(files: readonly RepoFile[]): Module[] {
   open(groups, "");
 
   while (groups.size < MAX_MODULES) {
+    let forced: string | null = null;
     let largest: string | null = null;
     let largestBytes = -1;
     for (const [prefix, group] of groups) {
       if (prefix === "" || !hasSubfolders(prefix, group)) continue;
+      const folder = prefix.slice(prefix.lastIndexOf("/") + 1);
+      if (NEVER_OPEN.has(folder)) continue;
+      if (ALWAYS_OPEN.has(folder)) {
+        forced = prefix;
+        break;
+      }
       const bytes = bytesOf(group);
       if (bytes > largestBytes) {
         largest = prefix;
         largestBytes = bytes;
       }
+    }
+    if (forced !== null) {
+      open(groups, forced);
+      continue;
     }
     if (largest === null) break;
     if (groups.size >= MIN_MODULES && largestBytes <= total / 2) break;

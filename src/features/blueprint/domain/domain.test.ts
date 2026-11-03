@@ -37,6 +37,30 @@ describe("groupModules", () => {
     expect(names).not.toContain("src");
   });
 
+  it("always opens code folders, even when they aren't the majority", () => {
+    const names = groupModules([
+      file("src/core/a.ts", 10),
+      file("src/ui/b.ts", 10),
+      ...["a", "b", "c", "d", "e", "f"].map((d) => file(`${d}/x.ts`, 50)),
+    ]).map((m) => m.name);
+
+    expect(names).toContain("src/core");
+    expect(names).toContain("src/ui");
+  });
+
+  it("keeps tests and examples in one room each", () => {
+    const names = groupModules([
+      file("test/e2e/a.ts", 900),
+      file("test/unit/b.ts", 900),
+      file("examples/x/c.ts", 900),
+      file("src/d.ts", 10),
+    ]).map((m) => m.name);
+
+    expect(names).toContain("test");
+    expect(names).toContain("examples");
+    expect(names).not.toContain("test/e2e");
+  });
+
   it("puts root files in a (root) room", () => {
     expect(groupModules([file("a.ts")])).toMatchObject([
       { id: "(root)", name: "(root)", files: 1, bytes: 100 },
@@ -134,6 +158,18 @@ describe("resolveImport", () => {
     ["other.py", "pkg.m", "pkg/m.py"],
   ])("from %s, %s is %s", (from, spec, expected) => {
     expect(resolveImport(from, spec, known)).toBe(expected);
+  });
+
+  it.each([
+    ["apps/web/a.ts", "@acme/core", "packages/core/src/index.ts"],
+    ["apps/web/a.ts", "ui", "packages/ui/index.ts"],
+  ])("from %s, the workspace package %s is %s", (from, spec, expected) => {
+    const workspace = new Set([
+      "packages/core/src/index.ts",
+      "packages/ui/index.ts",
+    ]);
+
+    expect(resolveImport(from, spec, workspace)).toBe(expected);
   });
 
   it.each([

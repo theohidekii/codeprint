@@ -90,6 +90,22 @@ function join(base: string[], relative: string): string | null {
   return parts.join("/");
 }
 
+/** In a monorepo, packages import each other by name: `@acme/core` lives in packages/core. */
+function resolveWorkspacePackage(
+  spec: string,
+  known: ReadonlySet<string>,
+): string | null {
+  const name = spec.startsWith("@") ? spec.split("/")[1] : spec.split("/")[0];
+  if (!name) return null;
+  for (const entry of ["src/index", "index"]) {
+    for (const extension of [".ts", ".tsx", ".js", ".jsx"]) {
+      const candidate = `packages/${name}/${entry}${extension}`;
+      if (known.has(candidate)) return candidate;
+    }
+  }
+  return null;
+}
+
 function resolveJs(
   fromPath: string,
   spec: string,
@@ -99,7 +115,9 @@ function resolveJs(
   if (spec.startsWith("@/")) target = join(["src"], spec.slice(2));
   else if (spec.startsWith("./") || spec.startsWith("../")) {
     target = join(fromPath.split("/").slice(0, -1), spec);
-  } else return null;
+  } else {
+    return resolveWorkspacePackage(spec, known);
+  }
   if (target === null) return null;
 
   // TypeScript sources are often imported by their compiled .js name.

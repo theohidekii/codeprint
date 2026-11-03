@@ -15,6 +15,36 @@ const MONO = "'Fragment Mono', ui-monospace, monospace";
 const WALL_GAP = 4;
 const ROOM_DIM = "0.3";
 const PIPE_DIM = "0.15";
+const CELL = 5;
+const MAX_CELLS = 400;
+const CELL_STEP = 10;
+const CELLS_TOP = 56;
+const CELLS_BOTTOM = 30;
+const CELLS_SIDE = 14;
+
+/** One small square per file, spread like furniture: rooms show how full they are at a glance. */
+function cells(item: Room, theme: SnapshotTheme): string {
+  const width = item.w - 2 * CELLS_SIDE;
+  const height = item.h - CELLS_TOP - CELLS_BOTTOM;
+  const maxColumns = Math.floor(width / CELL_STEP);
+  const maxRows = Math.floor(height / CELL_STEP);
+  if (maxColumns <= 0 || maxRows <= 0) return "";
+  const count = Math.min(item.files, maxColumns * maxRows, MAX_CELLS);
+  const columns = Math.min(
+    maxColumns,
+    Math.ceil(width / Math.sqrt((width * height) / count)),
+  );
+  const rows = Math.ceil(count / columns);
+  const stepX = width / columns;
+  const stepY = height / rows;
+  let out = "";
+  for (let i = 0; i < count; i++) {
+    const x = item.x + CELLS_SIDE + (i % columns) * stepX;
+    const y = item.y + CELLS_TOP + Math.floor(i / columns) * stepY;
+    out += `<rect data-cell="" x="${n(x)}" y="${n(y)}" width="${CELL}" height="${CELL}" fill="${theme.text}" fill-opacity="0.28"/>`;
+  }
+  return out;
+}
 
 const n = (value: number) => Math.round(value * 100) / 100;
 
@@ -49,6 +79,7 @@ function room(item: Room, theme: SnapshotTheme, dimmed: boolean): string {
     `<g data-room="${escapeXml(item.id)}"${opacity}>` +
     `<rect x="${n(item.x)}" y="${n(item.y)}" width="${n(item.w)}" height="${n(item.h)}" fill="${theme.card}" fill-opacity="0.55" stroke="${item.hotspot ? theme.accent : theme.text}" stroke-width="2"/>` +
     inner +
+    cells(item, theme) +
     label +
     detail +
     callout +

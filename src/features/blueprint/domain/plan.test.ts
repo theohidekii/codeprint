@@ -107,8 +107,29 @@ describe("layoutPlan", () => {
       }),
     );
 
-    expect(rooms[1]!.label!.endsWith("…")).toBe(true);
+    expect(rooms[1]!.label!.startsWith("…")).toBe(true);
     expect(rooms[2]!.label).toBe("3");
+  });
+
+  it("keeps the end of a long name, where modules differ", () => {
+    const { rooms } = layout(
+      analysis({
+        modules: [
+          { id: "a", name: "a", bytes: 1_000_000, files: 1 },
+          {
+            id: "l",
+            name: "packages/third-party/very-long-name/font",
+            bytes: 60_000,
+            files: 1,
+          },
+        ],
+        edges: [],
+        hotspots: [],
+      }),
+    );
+
+    expect(rooms[1]!.label!.startsWith("…")).toBe(true);
+    expect(rooms[1]!.label!.endsWith("/font")).toBe(true);
   });
 
   it("keeps even the smallest room big enough to see", () => {
@@ -219,6 +240,36 @@ describe("renderPlan", () => {
     expect(opacity('[data-room="src/ui"]')).toBe("0.3");
     expect(opacity('[data-pipe="tests>src/core"]')).toBeNull();
     expect(opacity('[data-pipe="src/ui>src/core"]')).toBe("0.15");
+  });
+
+  it("draws a small cell per file inside each room", () => {
+    const doc = parse(renderPlan(layout(), theme));
+
+    expect(
+      doc.querySelectorAll('[data-room="tests"] [data-cell]'),
+    ).toHaveLength(5);
+    expect(
+      doc.querySelectorAll('[data-room="src/core"] [data-cell]'),
+    ).toHaveLength(20);
+  });
+
+  it("never draws cells outside a room, however many files it has", () => {
+    const model = layout(
+      analysis({
+        modules: [{ id: "a", name: "a", bytes: 10, files: 100000 }],
+        edges: [],
+        hotspots: [],
+      }),
+    );
+    const doc = parse(renderPlan(model, theme));
+    const room = model.rooms[0]!;
+    const cells = [...doc.querySelectorAll("[data-cell]")];
+
+    expect(cells.length).toBeLessThanOrEqual(1500);
+    for (const cell of cells) {
+      expect(Number(cell.getAttribute("x"))).toBeLessThan(room.x + room.w);
+      expect(Number(cell.getAttribute("y"))).toBeLessThan(room.y + room.h);
+    }
   });
 
   it("embeds fonts when given", () => {

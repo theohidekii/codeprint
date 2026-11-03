@@ -7,6 +7,7 @@ export type PlanSize = "landscape" | "square" | "linkedin";
 export interface Room extends Rect {
   id: string;
   number: number;
+  files: number;
   /** The name, shortened to fit, or just the number in tiny rooms. */
   label: string | null;
   detail: string | null;
@@ -61,6 +62,12 @@ const ELLIPSIS = "…";
 function shorten(text: string, maxChars: number): string {
   if (text.length <= maxChars) return text;
   return text.slice(0, Math.max(1, maxChars - 1)) + ELLIPSIS;
+}
+
+/** Shortens a path from the left: its end is what tells modules apart. */
+function shortenPath(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  return ELLIPSIS + text.slice(text.length - Math.max(1, maxChars - 1));
 }
 
 function formatBytes(bytes: number): string {
@@ -118,7 +125,8 @@ export function layoutPlan(
       ...rect,
       id: module_.id,
       number: i + 1,
-      label: roomy ? shorten(module_.name, fit) : String(i + 1),
+      files: module_.files,
+      label: roomy ? shortenPath(module_.name, fit) : String(i + 1),
       detail: roomy && rect.h >= 56 && detail.length <= fit + 2 ? detail : null,
       hotspot: hotspots.get(module_.id) ?? null,
     };
