@@ -5,7 +5,7 @@ import { tools } from "@/shared/lib/tools";
 import { ToolGrid } from "./tool-grid";
 
 describe("ToolGrid", () => {
-  it("shows one card per tool with its name, tagline, status and link", () => {
+  it("shows one card per tool with its name, tagline and link", () => {
     render(<ToolGrid tools={tools} />);
     const cards = screen.getAllByRole("article");
 
@@ -16,11 +16,6 @@ describe("ToolGrid", () => {
         within(card).getByRole("heading", { name: tool.name }),
       ).toBeInTheDocument();
       expect(within(card).getByText(tool.tagline)).toBeInTheDocument();
-      expect(
-        within(card).getByText(
-          tool.status === "available" ? "Available" : "Coming soon",
-        ),
-      ).toBeInTheDocument();
       expect(within(card).getByRole("link")).toHaveAttribute(
         "href",
         `/${tool.slug}`,

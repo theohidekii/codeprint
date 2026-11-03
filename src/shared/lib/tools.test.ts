@@ -10,19 +10,6 @@ describe("tool registry", () => {
     ]);
   });
 
-  it("assigns each tool to its phase", () => {
-    expect(tools.map((tool) => tool.phase)).toEqual([2, 3, 4, 5]);
-  });
-
-  it("marks every tool as available", () => {
-    expect(tools.map((tool) => tool.status)).toEqual([
-      "available",
-      "available",
-      "available",
-      "available",
-    ]);
-  });
-
   it("finds a tool by slug", () => {
     expect(getTool("trace")?.name).toBe("Trace");
   });

@@ -1,6 +1,6 @@
 import { SnapshotView } from "@/features/snapshot/ui/snapshot-view";
 import { getTool } from "@/shared/lib/tools";
-import { toolMetadata } from "@/shared/ui/tool-placeholder";
+import { toolMetadata } from "@/shared/lib/tools";
 
 export const metadata = toolMetadata("snapshot");
 

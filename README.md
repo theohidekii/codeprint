@@ -9,14 +9,18 @@ Codeprint is a toolkit for investigating code. Paste a snippet and trace it back
   <img alt="The Codeprint landing page: the headline 'The fingerprint of code.' next to a fingerprint whose ridges are lines of code." src="docs/assets/landing-light.png" />
 </picture>
 
+## Demo
+
+![A tour of Codeprint: tracing a snippet to its sources, a code image, a fingerprint poster and a repository floor plan.](docs/assets/demo.gif)
+
 ## Tools
 
-| Tool            | What it does                                                                                             | Status    |
-| --------------- | -------------------------------------------------------------------------------------------------------- | --------- |
-| **Trace**       | Finds public repositories containing a snippet, even when identifiers were renamed, ranked by similarity | Available |
-| **Snapshot**    | Turns a snippet into a polished, shareable image                                                         | Available |
-| **Fingerprint** | Generates unique art from a GitHub user or repository                                                    | Available |
-| **Blueprint**   | Draws a repository's architecture as a technical blueprint                                               | Available |
+| Tool            | What it does                                                                                             |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| **Trace**       | Finds public repositories containing a snippet, even when identifiers were renamed, ranked by similarity |
+| **Snapshot**    | Turns a snippet into a polished, shareable image                                                         |
+| **Fingerprint** | Generates unique art from a GitHub user or repository                                                    |
+| **Blueprint**   | Draws a repository's architecture as a floor plan                                                        |
 
 ## Trace
 
@@ -142,6 +146,7 @@ src/
   features/<tool>/
     domain/            Pure logic, no framework imports (enforced by ESLint)
     providers/         Adapters to external APIs
+    server/            Server-side analysis, where a tool needs it
     ui/                The tool's React components
   shared/
     lib/               Small helpers and the tool registry
