@@ -45,7 +45,7 @@ export const tools: readonly Tool[] = [
     tagline: "A repository's architecture, drawn as a plan.",
     description:
       "See modules and dependencies as a technical blueprint, with hotspots where files grow large or tangled.",
-    status: "coming-soon",
+    status: "available",
     phase: 5,
   },
 ];
