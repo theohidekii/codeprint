@@ -9,7 +9,7 @@ import { layoutSnapshot, type SnapshotModel } from "../domain/layout";
 import type { SnapshotOptions } from "../domain/options";
 import { renderSvg } from "../domain/render-svg";
 import { getSnapshotTheme } from "../domain/themes";
-import { loadEmbeddedFonts } from "../export/fonts";
+import { loadEmbeddedFonts } from "@/shared/lib/export/fonts";
 import { highlight } from "../highlight/highlight";
 
 const DEBOUNCE_MS = 120;

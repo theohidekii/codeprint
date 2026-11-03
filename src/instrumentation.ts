@@ -11,6 +11,7 @@ export async function register() {
 
   const { server } = await import("@/test/msw/server");
   const { traceHandlers } = await import("@/test/msw/trace-handlers");
-  server.use(...traceHandlers);
+  const { githubHandlers } = await import("@/test/msw/github-handlers");
+  server.use(...traceHandlers, ...githubHandlers);
   server.listen({ onUnhandledFrame: "bypass" });
 }

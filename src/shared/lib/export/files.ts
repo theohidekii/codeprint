@@ -1,16 +1,14 @@
-import type { Language } from "@/features/trace/domain/types";
-
-/** A file name from the snapshot title, or `codeprint-<language>` without one. */
-export function snapshotFilename(
+/** A file name from a title, or the fallback when the title has nothing usable. */
+export function filenameFor(
   title: string,
-  language: Language,
+  fallback: string,
   ext: "png" | "svg",
 ): string {
   const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return `${slug || `codeprint-${language}`}.${ext}`;
+  return `${slug || fallback}.${ext}`;
 }
 
 /** Saves a blob through a temporary download link. */

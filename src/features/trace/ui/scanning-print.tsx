@@ -1,4 +1,4 @@
-import { buildRidges } from "@/features/landing/lib/ridges";
+import { buildRidges } from "@/shared/lib/ridges";
 
 const ridges = buildRidges();
 

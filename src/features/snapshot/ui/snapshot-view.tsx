@@ -17,9 +17,9 @@ import { DEFAULT_OPTIONS, optionsReducer } from "../domain/options";
 import {
   copyPngToClipboard,
   downloadBlob,
-  snapshotFilename,
-} from "../export/files";
-import { svgToPngBlob } from "../export/png";
+  filenameFor,
+} from "@/shared/lib/export/files";
+import { svgToPngBlob } from "@/shared/lib/export/png";
 import { OptionsPanel } from "./options-panel";
 import { SnapshotPreview } from "./snapshot-preview";
 import { useSnapshot } from "./use-snapshot";
@@ -50,7 +50,7 @@ export function SnapshotView() {
     try {
       downloadBlob(
         await png(),
-        snapshotFilename(options.title, language, "png"),
+        filenameFor(options.title, `codeprint-${language}`, "png"),
       );
     } catch {
       setStatus(EXPORT_FAILED);
@@ -110,7 +110,7 @@ export function SnapshotView() {
             onClick={() =>
               downloadBlob(
                 new Blob([svg!], { type: "image/svg+xml" }),
-                snapshotFilename(options.title, language, "svg"),
+                filenameFor(options.title, `codeprint-${language}`, "svg"),
               )
             }
           >

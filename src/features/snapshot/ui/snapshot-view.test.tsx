@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 
 import { EXAMPLE_SNIPPET } from "@/features/trace/domain/examples";
 
-import { copyPngToClipboard, downloadBlob } from "../export/files";
-import { svgToPngBlob } from "../export/png";
+import { copyPngToClipboard, downloadBlob } from "@/shared/lib/export/files";
+import { svgToPngBlob } from "@/shared/lib/export/png";
 import { highlight } from "../highlight/highlight";
 import { SnapshotView } from "./snapshot-view";
 
@@ -13,14 +13,14 @@ vi.mock("../highlight/highlight", () => ({
     code.split("\n").map((text) => (text ? [{ text, color: "#ffffff" }] : [])),
   ),
 }));
-vi.mock("../export/fonts", () => ({
+vi.mock("@/shared/lib/export/fonts", () => ({
   loadEmbeddedFonts: async () => ({ mono: "data:,", sans: "data:," }),
 }));
-vi.mock("../export/png", () => ({
+vi.mock("@/shared/lib/export/png", () => ({
   svgToPngBlob: vi.fn(async () => new Blob(["png"], { type: "image/png" })),
 }));
-vi.mock("../export/files", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../export/files")>()),
+vi.mock("@/shared/lib/export/files", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/shared/lib/export/files")>()),
   downloadBlob: vi.fn(),
   copyPngToClipboard: vi.fn(async () => "copied"),
 }));

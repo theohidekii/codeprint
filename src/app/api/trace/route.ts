@@ -9,9 +9,9 @@ import { fetchFileContent } from "@/features/trace/providers/content";
 import { createGithubProvider } from "@/features/trace/providers/github";
 import { createSourcegraphProvider } from "@/features/trace/providers/sourcegraph";
 import type { SearchProvider } from "@/features/trace/providers/types";
-import { createTraceCache } from "@/features/trace/server/cache";
+import { createCache } from "@/shared/server/cache";
 import { toNdjsonStream } from "@/features/trace/server/ndjson";
-import { createRateLimiter } from "@/features/trace/server/rate-limit";
+import { createRateLimiter } from "@/shared/server/rate-limit";
 import { runTrace, type TraceEvent } from "@/features/trace/server/run-trace";
 
 const MAX_CODE_CHARS = 20_000;
@@ -23,7 +23,7 @@ const bodySchema = z.object({
 });
 
 const limiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
-const cache = createTraceCache({ max: 50, ttlMs: 600_000 });
+const cache = createCache<TraceEvent[]>({ max: 50, ttlMs: 600_000 });
 
 function providers(): SearchProvider[] {
   const list = [createSourcegraphProvider()];
