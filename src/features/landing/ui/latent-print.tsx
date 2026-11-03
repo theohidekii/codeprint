@@ -1,4 +1,4 @@
-import { buildRidges, PRINT_CORE } from "../lib/ridges";
+import { buildRidges, PRINT_CORE } from "@/shared/lib/ridges";
 
 // The ridges are written in code: a few lines Trace would recognise even after renaming.
 const CODE =

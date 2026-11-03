@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 
 import { server } from "@/test/msw/server";
 
-import { copyPngToClipboard, downloadBlob, snapshotFilename } from "./files";
+import { copyPngToClipboard, downloadBlob, filenameFor } from "./files";
 import { loadEmbeddedFonts, resetEmbeddedFonts } from "./fonts";
 
 describe("loadEmbeddedFonts", () => {
@@ -33,14 +33,14 @@ describe("loadEmbeddedFonts", () => {
   });
 });
 
-describe("snapshotFilename", () => {
+describe("filenameFor", () => {
   it.each([
-    ["My Debounce!", "javascript", "png", "my-debounce.png"],
-    ["", "go", "svg", "codeprint-go.svg"],
-    ["   ", "rust", "png", "codeprint-rust.png"],
-    ["main.go", "go", "svg", "main-go.svg"],
-  ] as const)("names %j as %s", (title, language, ext, expected) => {
-    expect(snapshotFilename(title, language, ext)).toBe(expected);
+    ["My Debounce!", "codeprint-js", "png", "my-debounce.png"],
+    ["", "codeprint-go", "svg", "codeprint-go.svg"],
+    ["   ", "codeprint-rust", "png", "codeprint-rust.png"],
+    ["vercel/next.js", "poster", "png", "vercel-next-js.png"],
+  ] as const)("names %j as %s", (title, fallback, ext, expected) => {
+    expect(filenameFor(title, fallback, ext)).toBe(expected);
   });
 });
 

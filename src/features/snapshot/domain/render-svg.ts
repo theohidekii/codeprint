@@ -1,4 +1,5 @@
-import { buildRidges } from "@/features/landing/lib/ridges";
+import type { EmbeddedFonts } from "@/shared/lib/export/fonts";
+import { buildRidges } from "@/shared/lib/ridges";
 
 import {
   CAPTION_FONT_SIZE,
@@ -8,13 +9,6 @@ import {
 } from "./layout";
 import type { BackgroundStyle } from "./options";
 import type { SnapshotTheme } from "./themes";
-
-export interface EmbeddedFonts {
-  /** data: URL of Fragment Mono. */
-  mono: string;
-  /** data: URL of Schibsted Grotesk Bold. */
-  sans: string;
-}
 
 const MONO = "'Fragment Mono', ui-monospace, monospace";
 /** Attributes for code text: set per element so the title and caption keep their own font. */

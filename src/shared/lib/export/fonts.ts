@@ -1,4 +1,8 @@
-import type { EmbeddedFonts } from "../domain/render-svg";
+/** The bundled fonts as data: URLs. */
+export interface EmbeddedFonts {
+  mono: string;
+  sans: string;
+}
 
 const FONT_FILES = {
   mono: "/fonts/FragmentMono-Regular.woff2",
