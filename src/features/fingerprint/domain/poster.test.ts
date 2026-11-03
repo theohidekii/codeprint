@@ -231,6 +231,20 @@ describe("renderPoster", () => {
     ).toContain("Schibsted Grotesk");
   });
 
+  it("labels a tiny language share as under 1%, not 0%", () => {
+    const svg = render(
+      profile({
+        languages: [
+          { name: "Go", share: 0.999 },
+          { name: "Other", share: 0.001 },
+        ],
+      }),
+    );
+
+    expect(parse(svg).documentElement.textContent).toContain("Other <1%");
+    expect(svg).not.toContain("Other 0%");
+  });
+
   it("signs the poster", () => {
     expect(parse(render()).querySelector("[data-mark]")!.textContent).toBe(
       "codeprint",

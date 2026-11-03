@@ -15,7 +15,7 @@ Codeprint is a toolkit for investigating code. Paste a snippet and trace it back
 | --------------- | -------------------------------------------------------------------------------------------------------- | --------- |
 | **Trace**       | Finds public repositories containing a snippet, even when identifiers were renamed, ranked by similarity | Available |
 | **Snapshot**    | Turns a snippet into a polished, shareable image                                                         | Available |
-| **Fingerprint** | Generates unique art from a GitHub user or repository                                                    | Phase 4   |
+| **Fingerprint** | Generates unique art from a GitHub user or repository                                                    | Available |
 | **Blueprint**   | Draws a repository's architecture as a technical blueprint                                               | Phase 5   |
 
 ## Trace
@@ -76,6 +76,22 @@ Paste code and export a polished image for a post, a README or a slide. It runs 
 - **Export:** PNG at 2×, SVG, or copy to the clipboard.
 
 The image is an SVG that Codeprint builds itself, from Shiki tokens laid out on a monospace grid, with the fonts embedded. So the preview is the exported file, the SVG stays crisp at any size, and the PNG is the same SVG drawn at twice the resolution. See [ADR 0003](docs/adr/0003-snapshot-svg-renderer.md).
+
+## Fingerprint
+
+![A poster for vercel/next.js: a whorl-pattern fingerprint colored by language, ringed by a 24-hour activity clock.](docs/assets/fingerprint-example.png)
+
+Enter a GitHub user or `owner/repo` and get a poster drawn from its public activity. The same input always draws the same print.
+
+How to read it:
+
+- The **pattern** and its centre come from the name, so every account has its own.
+- **Ridge colors** show the languages, in proportion to how much each is used.
+- **Calm ridges** mean steady work across the week; restless ones mean bursts.
+- The **ring** is a 24-hour clock in UTC: a longer tick means more activity then.
+- **More ridges** mean more repositories or files.
+
+It works without a token, within GitHub's limit of 60 requests per hour (one poster takes 3 or 4). Set `GITHUB_TOKEN` to raise that limit. Activity is sampled from the most recent 100 events or commits, and only public data is read. See [ADR 0004](docs/adr/0004-fingerprint-mapping.md).
 
 ## Quick start
 

@@ -41,7 +41,7 @@ function text(model: PosterModel, theme: SnapshotTheme): string {
     .map(
       (item) =>
         `<circle cx="${item.x + 7}" cy="${item.y - 5}" r="6" fill="${item.color}"/>` +
-        `<text x="${item.x + 22}" y="${item.y}" font-size="${LEGEND_FONT_SIZE}" fill="${theme.muted}" font-family="${SANS}" font-weight="700">${escapeXml(`${item.name} ${item.percent}%`)}</text>`,
+        `<text x="${item.x + 22}" y="${item.y}" font-size="${LEGEND_FONT_SIZE}" fill="${theme.muted}" font-family="${SANS}" font-weight="700">${escapeXml(`${item.name} ${item.percent < 1 ? "<1" : item.percent}%`)}</text>`,
     )
     .join("");
 
