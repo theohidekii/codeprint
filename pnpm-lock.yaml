@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@shikijs/langs-precompiled':
+        specifier: 4.5.0
+        version: 4.5.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -753,6 +756,10 @@ packages:
 
   '@shikijs/engine-oniguruma@4.5.0':
     resolution: {integrity: sha512-dKVmbJecVdB9recl8a/CU4jdpNXyjJQrIcesIkpS70s5HS02ohpnCSpMUbotPnEUzbAcLQ+S4hwZYbkBBiTcJw==}
+    engines: {node: '>=20'}
+
+  '@shikijs/langs-precompiled@4.5.0':
+    resolution: {integrity: sha512-l6x3sNA4qvSQPtFogjhVj9IjjYhQ6Z4zy+E2vP5/PteFYCtT7GR7xZIjUT8QQKgA7k6glMDQXI0265qmIkJXLg==}
     engines: {node: '>=20'}
 
   '@shikijs/langs@4.5.0':
@@ -3717,6 +3724,11 @@ snapshots:
     dependencies:
       '@shikijs/types': 4.5.0
       '@shikijs/vscode-textmate': 10.1.0
+
+  '@shikijs/langs-precompiled@4.5.0':
+    dependencies:
+      '@shikijs/types': 4.5.0
+      oniguruma-to-es: 4.3.6
 
   '@shikijs/langs@4.5.0':
     dependencies:

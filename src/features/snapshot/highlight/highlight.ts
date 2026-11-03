@@ -3,12 +3,14 @@ import {
   type HighlighterCore,
   type ThemeRegistration,
 } from "shiki/core";
-import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import { createJavaScriptRawEngine } from "shiki/engine/javascript";
 
 import type { Language } from "@/features/trace/domain/types";
 
-import type { ColoredLine } from "../domain/layout";
+import { type ColoredLine, MAX_COLUMNS, MAX_LINES } from "../domain/layout";
 import type { SnapshotTheme } from "../domain/themes";
+
+const TOKENIZE_TIME_LIMIT_MS = 5000;
 
 // Shiki's FontStyle flags.
 const ITALIC = 1;
@@ -17,24 +19,24 @@ const BOLD = 2;
 let instance: Promise<HighlighterCore> | undefined;
 
 /**
- * One shared highlighter with only the languages Codeprint supports and the JavaScript regex
- * engine (no WebAssembly), created on first use.
+ * One shared highlighter with only the languages Codeprint supports, using grammars precompiled
+ * to JavaScript regexes (no WebAssembly, no slow conversion on first use), created lazily.
  */
 export function getHighlighter(): Promise<HighlighterCore> {
   instance ??= createHighlighterCore({
-    engine: createJavaScriptRegexEngine(),
+    engine: createJavaScriptRawEngine(),
     langs: [
-      import("shiki/langs/javascript.mjs"),
-      import("shiki/langs/typescript.mjs"),
-      import("shiki/langs/python.mjs"),
-      import("shiki/langs/java.mjs"),
-      import("shiki/langs/c.mjs"),
-      import("shiki/langs/cpp.mjs"),
-      import("shiki/langs/csharp.mjs"),
-      import("shiki/langs/go.mjs"),
-      import("shiki/langs/rust.mjs"),
-      import("shiki/langs/php.mjs"),
-      import("shiki/langs/ruby.mjs"),
+      import("@shikijs/langs-precompiled/javascript"),
+      import("@shikijs/langs-precompiled/typescript"),
+      import("@shikijs/langs-precompiled/python"),
+      import("@shikijs/langs-precompiled/java"),
+      import("@shikijs/langs-precompiled/c"),
+      import("@shikijs/langs-precompiled/cpp"),
+      import("@shikijs/langs-precompiled/csharp"),
+      import("@shikijs/langs-precompiled/go"),
+      import("@shikijs/langs-precompiled/rust"),
+      import("@shikijs/langs-precompiled/php"),
+      import("@shikijs/langs-precompiled/ruby"),
     ],
     themes: [],
   });
@@ -52,9 +54,20 @@ export async function highlight(
     await highlighter.loadTheme(theme.shiki as ThemeRegistration);
   }
 
-  const lines = highlighter.codeToTokensBase(code, {
+  // The image shows at most MAX_LINES × MAX_COLUMNS. One extra line and some extra columns
+  // survive so the layout can still tell the code was cut.
+  const visible = code
+    .split("\n")
+    .slice(0, MAX_LINES + 1)
+    .map((line) => line.slice(0, MAX_COLUMNS * 4))
+    .join("\n");
+
+  const lines = highlighter.codeToTokensBase(visible, {
     lang: language === "generic" ? "text" : language,
     theme: theme.shiki.name,
+    // Shiki silently stops coloring a line that takes longer than this. On a cold start the
+    // JavaScript regex engine compiles grammars lazily, so the default 500 ms is too tight.
+    tokenizeTimeLimit: TOKENIZE_TIME_LIMIT_MS,
   });
 
   return lines.map((line) =>

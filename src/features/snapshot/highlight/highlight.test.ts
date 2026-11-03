@@ -26,9 +26,14 @@ describe("highlight", () => {
     expect(lines[2]!.map((t) => t.text).join("")).toBe("b();");
   });
 
-  it.each(LANGUAGES)("highlights %s without throwing", async (language) => {
-    await expect(highlight("x", language, theme)).resolves.toHaveLength(1);
-  });
+  // A grammar is compiled on first use; C++ alone takes a couple of seconds cold.
+  it.each(LANGUAGES)(
+    "highlights %s without throwing",
+    async (language) => {
+      await expect(highlight("x", language, theme)).resolves.toHaveLength(1);
+    },
+    20_000,
+  );
 
   it("renders generic code in the editor foreground", async () => {
     const [line] = await highlight("hello world", "generic", theme);
@@ -42,6 +47,17 @@ describe("highlight", () => {
     const [line] = await highlight("// note", "javascript", theme);
 
     expect(line!.some((t) => t.fontStyle === "italic")).toBe(true);
+  });
+
+  it("only highlights what the image can show, plus enough to flag the cut", async () => {
+    const huge = Array.from({ length: 5000 }, () => "y".repeat(2000)).join(
+      "\n",
+    );
+
+    const lines = await highlight(huge, "javascript", theme);
+
+    expect(lines).toHaveLength(81);
+    expect(lines[0]!.map((t) => t.text).join("").length).toBe(480);
   });
 
   it("creates the highlighter once and reuses it", async () => {
