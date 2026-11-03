@@ -28,8 +28,16 @@ export function useSnapshot(
   code: string,
   language: Language,
   options: SnapshotOptions,
-): { svg: string | null; model: SnapshotModel | null; pending: boolean } {
+): {
+  svg: string | null;
+  model: SnapshotModel | null;
+  /** The shown image doesn't match the current input yet. */
+  pending: boolean;
+  /** The current input could not be rendered. */
+  failed: boolean;
+} {
   const [rendered, setRendered] = useState<Rendered | null>(null);
+  const [failedKey, setFailedKey] = useState<string | null>(null);
   const empty = code.trim() === "";
   const key = JSON.stringify([code, language, options]);
 
@@ -55,7 +63,8 @@ export function useSnapshot(
         });
         setRendered({ key, svg, model });
       } catch {
-        // Keep the last good preview; the next edit will try again.
+        // Keep the last good preview on screen; the next edit tries again.
+        if (!cancelled) setFailedKey(key);
       }
     }, DEBOUNCE_MS);
     return () => {
@@ -64,10 +73,13 @@ export function useSnapshot(
     };
   }, [code, language, options, empty, key]);
 
-  if (empty || !rendered) return { svg: null, model: null, pending: !empty };
+  if (empty) return { svg: null, model: null, pending: false, failed: false };
+  const failed = failedKey === key;
+  if (!rendered) return { svg: null, model: null, pending: !failed, failed };
   return {
     svg: rendered.svg,
     model: rendered.model,
     pending: rendered.key !== key,
+    failed,
   };
 }

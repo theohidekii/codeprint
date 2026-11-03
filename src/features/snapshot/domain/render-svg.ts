@@ -1,6 +1,11 @@
 import { buildRidges } from "@/features/landing/lib/ridges";
 
-import { FONT_SIZE, type SnapshotModel } from "./layout";
+import {
+  CAPTION_FONT_SIZE,
+  FONT_SIZE,
+  type SnapshotModel,
+  TITLE_FONT_SIZE,
+} from "./layout";
 import type { BackgroundStyle } from "./options";
 import type { SnapshotTheme } from "./themes";
 
@@ -23,7 +28,10 @@ const INVALID_XML = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g;
 
 /** The one escaping function used for every text node and attribute value. */
 function escapeXml(text: string): string {
+  // toWellFormed drops half of a broken emoji pair, which would make encodeURIComponent throw.
   return text
+    .toWellFormed()
+    .replace(/�/g, "")
     .replace(INVALID_XML, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -68,7 +76,7 @@ function windowBar(model: SnapshotModel, theme: SnapshotTheme): string {
     .join("");
   return (
     dots +
-    `<text data-title="" x="${model.card.width / 2}" y="${height / 2 + 5}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="13" fill="${theme.muted}">${escapeXml(title)}</text>` +
+    `<text data-title="" x="${model.card.width / 2}" y="${height / 2 + 5}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="${TITLE_FONT_SIZE}" fill="${theme.muted}">${escapeXml(title)}</text>` +
     `<line x1="0" y1="${height}" x2="${model.card.width}" y2="${height}" stroke="${theme.cardBorder}"/>`
   );
 }
@@ -111,7 +119,7 @@ export function renderSvg(
   const { card } = model;
   const style = `<style>${options.fonts ? fontFaces(options.fonts) : ""}</style>`;
   const caption = model.caption
-    ? `<text data-caption="" x="${model.width / 2}" y="${model.caption.y}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="15" fill="${theme.muted}">${escapeXml(model.caption.text)}</text>`
+    ? `<text data-caption="" x="${model.width / 2}" y="${model.caption.y}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="${CAPTION_FONT_SIZE}" fill="${theme.muted}">${escapeXml(model.caption.text)}</text>`
     : "";
 
   return (

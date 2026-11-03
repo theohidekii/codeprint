@@ -143,6 +143,42 @@ describe("layoutSnapshot", () => {
     expect(model.card.width).toBeCloseTo(28 * 2 + 6 * CHAR);
   });
 
+  it("ignores highlights that point past the last line", () => {
+    const model = layoutSnapshot(three, opts({ highlighted: [10] }), "JS");
+
+    expect(model.lines.some((l) => l.dimmed || l.highlighted)).toBe(false);
+  });
+
+  it("makes the card wide enough for the window title", () => {
+    const title = "t".repeat(60);
+    const model = layoutSnapshot(plain("a = 1;"), opts({ title }), "JS");
+
+    // Window dots on the left, the title centred, the same room on the right.
+    expect(model.card.width).toBeGreaterThanOrEqual(156 + 60 * 13 * 0.6);
+  });
+
+  it("makes an auto image wide enough for its caption", () => {
+    const caption = "c".repeat(120);
+    const model = layoutSnapshot(plain("a = 1;"), opts({ caption }), "JS");
+
+    expect(model.width).toBeGreaterThanOrEqual(120 * 15 * 0.6 + 2 * 56);
+    expect(model.caption!.text).toBe(caption);
+  });
+
+  it("shortens a caption that cannot fit a fixed size", () => {
+    const caption = "c".repeat(120);
+    const model = layoutSnapshot(
+      plain("a = 1;"),
+      opts({ caption, size: "square", padding: "spacious" }),
+      "JS",
+    );
+
+    expect(model.caption!.text.endsWith("…")).toBe(true);
+    expect(model.caption!.text.length * 15 * 0.6).toBeLessThanOrEqual(
+      1080 - 2 * 88,
+    );
+  });
+
   it("expands tabs to two spaces", () => {
     const model = layoutSnapshot(plain("\tx"), opts(), "JS");
 

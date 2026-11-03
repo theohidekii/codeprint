@@ -89,6 +89,13 @@ describe("renderSvg", () => {
     );
   });
 
+  it("drops unpaired surrogates, which would break the data URL", () => {
+    const { svg, doc } = render([[{ text: "a\uD800b\uDC00c", color: "#fff" }]]);
+
+    expect(doc.querySelector('text[data-line="1"]')!.textContent).toBe("abc");
+    expect(() => encodeURIComponent(svg)).not.toThrow();
+  });
+
   it("drops control characters that XML cannot hold", () => {
     const { doc } = render([[{ text: "a\u0001b\u0000c", color: "#fff" }]]);
 

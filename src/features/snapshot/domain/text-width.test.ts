@@ -20,4 +20,10 @@ describe("text width", () => {
     expect(cellWidth("한")).toBe(2);
     expect(cellWidth("🚀")).toBe(2);
   });
+
+  it("treats emoji drawn as pictures as two cells, but not text symbols", () => {
+    for (const emoji of ["✅", "❌", "⚡", "⭐"])
+      expect(cellWidth(emoji)).toBe(2);
+    for (const symbol of ["✓", "→", "©"]) expect(cellWidth(symbol)).toBe(1);
+  });
 });

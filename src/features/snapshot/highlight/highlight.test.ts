@@ -18,6 +18,12 @@ describe("highlight", () => {
     );
   });
 
+  it("ignores the newline that ends a pasted file", async () => {
+    expect(await highlight("a();\nb();\n", "javascript", theme)).toHaveLength(
+      2,
+    );
+  });
+
   it("returns one line per source line, keeping empty ones", async () => {
     const lines = await highlight("a();\n\nb();", "javascript", theme);
 

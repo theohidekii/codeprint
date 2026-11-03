@@ -3,18 +3,21 @@ import userEvent from "@testing-library/user-event";
 
 import { EXAMPLE_SNIPPET } from "@/features/trace/domain/examples";
 
-import { copyPngToClipboard } from "../export/files";
+import { copyPngToClipboard, downloadBlob } from "../export/files";
+import { svgToPngBlob } from "../export/png";
+import { highlight } from "../highlight/highlight";
 import { SnapshotView } from "./snapshot-view";
 
 vi.mock("../highlight/highlight", () => ({
-  highlight: async (code: string) =>
+  highlight: vi.fn(async (code: string) =>
     code.split("\n").map((text) => (text ? [{ text, color: "#ffffff" }] : [])),
+  ),
 }));
 vi.mock("../export/fonts", () => ({
   loadEmbeddedFonts: async () => ({ mono: "data:,", sans: "data:," }),
 }));
 vi.mock("../export/png", () => ({
-  svgToPngBlob: async () => new Blob(["png"], { type: "image/png" }),
+  svgToPngBlob: vi.fn(async () => new Blob(["png"], { type: "image/png" })),
 }));
 vi.mock("../export/files", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../export/files")>()),
@@ -94,9 +97,96 @@ describe("SnapshotView", () => {
     await waitFor(async () => expect(await previewSvg()).toContain("#ecebe6"));
   });
 
+  it("locks exports while the preview is out of date", async () => {
+    await withExample();
+    const png = screen.getByRole("button", { name: "Download PNG" });
+    expect(png).toBeEnabled();
+
+    await userEvent.click(
+      within(screen.getByRole("radiogroup", { name: "Theme" })).getByRole(
+        "radio",
+        {
+          name: "Paper",
+        },
+      ),
+    );
+
+    expect(png).toBeDisabled();
+    await waitFor(() => expect(png).toBeEnabled());
+  });
+
+  it("explains when the image can't be made, and offers no broken download", async () => {
+    await withExample();
+    vi.mocked(downloadBlob).mockClear();
+    vi.mocked(svgToPngBlob).mockRejectedValueOnce(new Error("decode failed"));
+
+    await userEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Couldn't create the image. Try again.",
+    );
+    expect(downloadBlob).not.toHaveBeenCalled();
+  });
+
+  it("hands Copy the image as a promise, so Safari accepts the write", async () => {
+    await withExample();
+    vi.mocked(copyPngToClipboard).mockClear();
+
+    await userEvent.click(screen.getByRole("button", { name: "Copy image" }));
+
+    expect(vi.mocked(copyPngToClipboard).mock.calls[0]![0]).toBeInstanceOf(
+      Promise,
+    );
+  });
+
+  it("explains when the preview can't be rendered, then recovers on the next edit", async () => {
+    vi.mocked(highlight).mockRejectedValueOnce(new Error("chunk failed"));
+    render(<SnapshotView />);
+    const editor = screen.getByRole("textbox", { name: "Code snippet" });
+    await userEvent.type(editor, "a");
+
+    expect(
+      await screen.findByText(
+        "Couldn't render this snippet. Edit it to try again.",
+      ),
+    ).toBeInTheDocument();
+
+    await userEvent.type(editor, "b");
+
+    expect(
+      await screen.findByRole("img", { name: "Snapshot preview" }),
+    ).toBeInTheDocument();
+  });
+
+  it("gives the lines one tab stop and moves between them with the arrow keys", async () => {
+    await withExample();
+    const lines = screen.getAllByRole("button", { name: /^Highlight line/ });
+    expect(lines.filter((line) => line.tabIndex === 0)).toHaveLength(1);
+
+    lines[0]!.focus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(
+      screen.getByRole("button", { name: "Highlight line 2" }),
+    ).toHaveFocus();
+    await userEvent.keyboard("{ArrowUp}{ArrowUp}");
+    expect(
+      screen.getByRole("button", { name: "Highlight line 1" }),
+    ).toHaveFocus();
+
+    await userEvent.keyboard("{End}");
+    expect(lines.at(-1)).toHaveFocus();
+    await userEvent.keyboard("{Home}");
+    expect(lines[0]).toHaveFocus();
+    expect(
+      screen
+        .getAllByRole("button", { name: /^Highlight line/ })
+        .filter((l) => l.tabIndex === 0),
+    ).toEqual([lines[0]]);
+  });
+
   it("toggles a line highlight from the preview", async () => {
     await withExample();
-    const line = screen.getByRole("button", { name: "Line 2" });
+    const line = screen.getByRole("button", { name: "Highlight line 2" });
     expect(line).toHaveAttribute("aria-pressed", "false");
     expect(
       screen.queryByRole("button", { name: "Clear highlights" }),
@@ -104,20 +194,18 @@ describe("SnapshotView", () => {
 
     await userEvent.click(line);
 
-    expect(screen.getByRole("button", { name: "Line 2" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    expect(
+      screen.getByRole("button", { name: "Highlight line 2" }),
+    ).toHaveAttribute("aria-pressed", "true");
     await waitFor(async () =>
       expect(await previewSvg()).toContain('data-highlight="2"'),
     );
     await userEvent.click(
       screen.getByRole("button", { name: "Clear highlights" }),
     );
-    expect(screen.getByRole("button", { name: "Line 2" })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
+    expect(
+      screen.getByRole("button", { name: "Highlight line 2" }),
+    ).toHaveAttribute("aria-pressed", "false");
   });
 
   it("says when long code is cut", async () => {

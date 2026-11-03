@@ -39,6 +39,9 @@ export function getHighlighter(): Promise<HighlighterCore> {
       import("@shikijs/langs-precompiled/ruby"),
     ],
     themes: [],
+  }).catch((error: unknown) => {
+    instance = undefined; // a failed start (e.g. a chunk that didn't load) is retried next time
+    throw error;
   });
   return instance;
 }
@@ -56,7 +59,9 @@ export async function highlight(
 
   // The image shows at most MAX_LINES × MAX_COLUMNS. One extra line and some extra columns
   // survive so the layout can still tell the code was cut.
+  // Pasted files usually end with a newline; it is not an extra, empty line of code.
   const visible = code
+    .replace(/\r?\n$/, "")
     .split("\n")
     .slice(0, MAX_LINES + 1)
     .map((line) => line.slice(0, MAX_COLUMNS * 4))

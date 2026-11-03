@@ -6,9 +6,9 @@ export const CHAR_WIDTH_RATIO = 0.618;
 
 export const TAB_WIDTH = 2;
 
-// East Asian wide and fullwidth ranges, plus emoji: these take two monospace cells.
+// East Asian wide and fullwidth ranges, plus emoji drawn as pictures: these take two cells.
 const WIDE =
-  /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]|[\u{1F300}-\u{1FAFF}]|[\u{20000}-\u{3FFFD}]/u;
+  /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]|\p{Emoji_Presentation}|[\u{1F300}-\u{1FAFF}]|[\u{20000}-\u{3FFFD}]/u;
 
 /** Cells one code point occupies in a monospace grid. */
 export function cellWidth(char: string): 1 | 2 {

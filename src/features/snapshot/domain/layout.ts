@@ -50,6 +50,12 @@ const BAR_HEIGHT = 44;
 const GUTTER_GAP = 20;
 const CAPTION_SPACE = 40;
 const ELLIPSIS = "…";
+export const TITLE_FONT_SIZE = 13;
+export const CAPTION_FONT_SIZE = 15;
+/** Average advance of Schibsted Grotesk Bold per font size, a safe overestimate. */
+const SANS_CHAR_RATIO = 0.6;
+/** Window dots plus breathing room, kept clear on each side of the centred title. */
+const TITLE_SIDE_ROOM = 78;
 
 const OUTER_PADDING: Record<PaddingPreset, number> = {
   compact: 32,
@@ -112,7 +118,8 @@ export function layoutSnapshot(
 
   const top = (bar?.height ?? 0) + CARD_PADDING;
   const left = CARD_PADDING + (gutter?.width ?? 0);
-  const anyHighlighted = options.highlighted.length > 0;
+  // Highlights left over from longer code must not dim every line of the new code.
+  const anyHighlighted = options.highlighted.some((n) => n <= visible.length);
 
   const lines: PlacedLine[] = fitted.map(({ tokens }, i) => {
     const number = i + 1;
@@ -132,16 +139,25 @@ export function layoutSnapshot(
     };
   });
 
-  const cardWidth = left + maxCols * charWidth + CARD_PADDING;
+  // The centred title needs the dots' room on both sides, so short code still fits its title.
+  const titleWidth = bar
+    ? bar.title.length * TITLE_FONT_SIZE * SANS_CHAR_RATIO
+    : 0;
+  const cardWidth = Math.max(
+    left + maxCols * charWidth + CARD_PADDING,
+    bar ? 2 * TITLE_SIDE_ROOM + titleWidth : 0,
+  );
   const cardHeight = top + visible.length * LINE_HEIGHT + CARD_PADDING;
   const pad = OUTER_PADDING[options.padding];
   const captionSpace = options.caption ? CAPTION_SPACE : 0;
+  const captionCharWidth = CAPTION_FONT_SIZE * SANS_CHAR_RATIO;
+  let caption = options.caption;
 
   let width: number;
   let height: number;
   let scale = 1;
   if (options.size === "auto") {
-    width = cardWidth + 2 * pad;
+    width = Math.max(cardWidth, caption.length * captionCharWidth) + 2 * pad;
     height = cardHeight + 2 * pad + captionSpace;
   } else {
     [width, height] = FIXED_SIZES[options.size];
@@ -150,6 +166,10 @@ export function layoutSnapshot(
       (width - 2 * pad) / cardWidth,
       (height - 2 * pad - captionSpace) / cardHeight,
     );
+    // A fixed size can't grow, so a caption too long for it is shortened instead.
+    const maxChars = Math.floor((width - 2 * pad) / captionCharWidth);
+    if (caption.length > maxChars)
+      caption = caption.slice(0, maxChars - 1) + ELLIPSIS;
   }
 
   const x = (width - cardWidth * scale) / 2;
@@ -165,9 +185,7 @@ export function layoutSnapshot(
     bar,
     gutter,
     lines,
-    caption: options.caption
-      ? { text: options.caption, y: y + cardHeight * scale + 28 }
-      : null,
+    caption: caption ? { text: caption, y: y + cardHeight * scale + 28 } : null,
     truncated: {
       lines: source.length > MAX_LINES,
       columns: fitted.some((l) => l.cut),

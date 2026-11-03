@@ -79,6 +79,28 @@ describe("copyPngToClipboard", () => {
     expect(write).toHaveBeenCalledTimes(1);
   });
 
+  it("starts the clipboard write before the image is ready, as Safari requires", async () => {
+    const write = vi.fn(async () => {});
+    stub(write);
+    let finish!: (blob: Blob) => void;
+    const pending = new Promise<Blob>((resolve) => (finish = resolve));
+
+    const result = copyPngToClipboard(pending);
+
+    // Safari only allows the write within the click, so it must not wait for the PNG.
+    expect(write).toHaveBeenCalledTimes(1);
+    finish(png);
+    expect(await result).toBe("copied");
+  });
+
+  it("reports a failure to make the image as unsupported", async () => {
+    stub(async () => {});
+
+    expect(
+      await copyPngToClipboard(Promise.reject(new Error("decode failed"))),
+    ).toBe("unsupported");
+  });
+
   it.each([
     ["no clipboard API", () => stub(undefined)],
     ["no ClipboardItem", () => stub(async () => {}, false)],
@@ -106,11 +128,16 @@ describe("downloadBlob", () => {
         expect(this.href).toBe("blob:x");
       });
 
+    vi.useFakeTimers();
     downloadBlob(new Blob(["x"]), "snap.png");
 
     expect(create).toHaveBeenCalledTimes(1);
     expect(click).toHaveBeenCalledTimes(1);
+    // Revoking right away can cancel the download in some browsers.
+    expect(revoke).not.toHaveBeenCalled();
+    vi.runAllTimers();
     expect(revoke).toHaveBeenCalledWith("blob:x");
+    vi.useRealTimers();
     create.mockRestore();
     revoke.mockRestore();
     click.mockRestore();

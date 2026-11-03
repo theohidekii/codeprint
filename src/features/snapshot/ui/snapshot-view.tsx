@@ -25,6 +25,8 @@ import { SnapshotPreview } from "./snapshot-preview";
 import { useSnapshot } from "./use-snapshot";
 
 const COPIED = "Copied";
+const EXPORT_FAILED = "Couldn't create the image. Try again.";
+const RENDER_FAILED = "Couldn't render this snippet. Edit it to try again.";
 const COPY_UNSUPPORTED =
   "Copy isn't available in this browser. Download the PNG instead.";
 
@@ -36,10 +38,24 @@ export function SnapshotView() {
 
   const detected = useMemo(() => detectLanguage(code), [code]);
   const language = choice === "auto" ? detected : choice;
-  const { svg, model } = useSnapshot(code, language, options);
-  const ready = svg !== null && model !== null;
+  const { svg, model, pending, failed } = useSnapshot(code, language, options);
+  const shown = svg !== null && model !== null;
+  // An out-of-date preview stays visible, but exporting it would give the wrong image.
+  const ready = shown && !pending;
 
   const png = () => svgToPngBlob(svg!, model!.width, model!.height);
+
+  const downloadPng = async () => {
+    setStatus("");
+    try {
+      downloadBlob(
+        await png(),
+        snapshotFilename(options.title, language, "png"),
+      );
+    } catch {
+      setStatus(EXPORT_FAILED);
+    }
+  };
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-start">
@@ -69,7 +85,7 @@ export function SnapshotView() {
 
       <div className="order-1 space-y-4 lg:sticky lg:top-6 lg:order-2">
         <div className="border-border bg-surface-raised overflow-hidden rounded-lg border p-3 sm:p-4">
-          {ready ? (
+          {shown ? (
             <SnapshotPreview
               svg={svg}
               model={model}
@@ -78,21 +94,13 @@ export function SnapshotView() {
             />
           ) : (
             <div className="text-muted grid aspect-[1200/627] place-items-center text-sm">
-              Paste code to see it here.
+              {failed ? RENDER_FAILED : "Paste code to see it here."}
             </div>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            disabled={!ready}
-            onClick={async () =>
-              downloadBlob(
-                await png(),
-                snapshotFilename(options.title, language, "png"),
-              )
-            }
-          >
+          <Button disabled={!ready} onClick={downloadPng}>
             <Download aria-hidden className="size-4" />
             Download PNG
           </Button>
@@ -113,7 +121,8 @@ export function SnapshotView() {
             disabled={!ready}
             onClick={async () => {
               setStatus("");
-              const result = await copyPngToClipboard(await png());
+              // Not awaited first: Safari only accepts a write started within the click.
+              const result = await copyPngToClipboard(png());
               setStatus(result === "copied" ? COPIED : COPY_UNSUPPORTED);
             }}
           >
@@ -134,6 +143,9 @@ export function SnapshotView() {
         <p role="status" className="text-muted min-h-5 text-sm">
           {status}
         </p>
+        {failed && shown && (
+          <p className="text-danger text-sm">{RENDER_FAILED}</p>
+        )}
         {model?.truncated.lines && (
           <p className="text-muted text-sm">
             Showing the first {MAX_LINES} lines
@@ -144,7 +156,7 @@ export function SnapshotView() {
             Long lines are cut at {MAX_COLUMNS} characters
           </p>
         )}
-        {ready && (
+        {shown && (
           <p className="text-muted text-sm">
             Click a line in the preview to highlight it.
           </p>
