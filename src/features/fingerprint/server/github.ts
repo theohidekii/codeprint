@@ -28,6 +28,16 @@ export class ProfileError extends Error {
   }
 }
 
+/** GitHub's primary and secondary limits both mean: stop asking for a while. */
+export function isRateLimited(response: Response): boolean {
+  return (
+    response.status === 429 ||
+    (response.status === 403 &&
+      (response.headers.get("x-ratelimit-remaining") === "0" ||
+        response.headers.has("retry-after")))
+  );
+}
+
 interface Deps {
   token?: string;
   fetch?: typeof fetch;
@@ -49,12 +59,7 @@ async function call(
       },
       signal: deps.signal ? AbortSignal.any([deps.signal, timeout]) : timeout,
     });
-    const exhausted =
-      response.status === 429 ||
-      (response.status === 403 &&
-        (response.headers.get("x-ratelimit-remaining") === "0" ||
-          response.headers.has("retry-after")));
-    if (exhausted) throw new ProfileError("rate-limited");
+    if (isRateLimited(response)) throw new ProfileError("rate-limited");
     if (!response.ok) return { status: response.status, body: null };
     return { status: response.status, body: await response.json() };
   } catch (error) {
