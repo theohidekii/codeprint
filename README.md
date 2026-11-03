@@ -16,7 +16,7 @@ Codeprint is a toolkit for investigating code. Paste a snippet and trace it back
 | **Trace**       | Finds public repositories containing a snippet, even when identifiers were renamed, ranked by similarity | Available |
 | **Snapshot**    | Turns a snippet into a polished, shareable image                                                         | Available |
 | **Fingerprint** | Generates unique art from a GitHub user or repository                                                    | Available |
-| **Blueprint**   | Draws a repository's architecture as a technical blueprint                                               | Phase 5   |
+| **Blueprint**   | Draws a repository's architecture as a technical blueprint                                               | Available |
 
 ## Trace
 
@@ -92,6 +92,21 @@ How to read it:
 - **More ridges** mean more repositories or files.
 
 It works without a token, within GitHub's limit of 60 requests per hour (one poster takes 3 or 4). Set `GITHUB_TOKEN` to raise that limit. Activity is sampled from the most recent 100 events or commits, and only public data is read. See [ADR 0004](docs/adr/0004-fingerprint-mapping.md).
+
+## Blueprint
+
+![A floor plan of vercel/swr: rooms sized by code, joined by yellow pipes where modules import each other.](docs/assets/blueprint-example.png)
+
+Enter `owner/repo` and get its architecture drawn as a floor plan.
+
+How to read it:
+
+- Each **room** is a module, and its size shows how much code it holds.
+- Each **small square** is a file, up to 400 per room.
+- **Pipes** join modules that import each other: thicker means more imports.
+- **Highlighted rooms** are the largest and the most connected.
+
+It works without a token, within GitHub's limit of 60 requests per hour. Set `GITHUB_TOKEN` to raise that limit. Dependencies come from the 300 largest files, and are read for JavaScript, TypeScript and Python. See [ADR 0005](docs/adr/0005-blueprint-floor-plan.md).
 
 ## Quick start
 
