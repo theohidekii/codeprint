@@ -27,7 +27,7 @@ export const tools: readonly Tool[] = [
     tagline: "Turn a snippet into an image worth sharing.",
     description:
       "Polished images of your code, with themes, frames and annotations. Export to PNG or SVG.",
-    status: "coming-soon",
+    status: "available",
     phase: 3,
   },
   {
