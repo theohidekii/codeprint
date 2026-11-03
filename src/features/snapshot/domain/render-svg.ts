@@ -1,5 +1,6 @@
 import type { EmbeddedFonts } from "@/shared/lib/export/fonts";
 import { buildRidges } from "@/shared/lib/ridges";
+import { escapeXml, fontFaces } from "@/shared/lib/svg";
 
 import {
   CAPTION_FONT_SIZE,
@@ -16,30 +17,6 @@ const CODE_FONT = `font-family="${MONO}" font-size="${FONT_SIZE}" style="font-va
 const SANS = "'Schibsted Grotesk', ui-sans-serif, sans-serif";
 const DIMMED_OPACITY = "0.45";
 const CARD_RADIUS = 14;
-
-// Characters XML 1.0 cannot contain at all, even escaped.
-const INVALID_XML = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g;
-
-/** The one escaping function used for every text node and attribute value. */
-function escapeXml(text: string): string {
-  // toWellFormed drops half of a broken emoji pair, which would make encodeURIComponent throw.
-  return text
-    .toWellFormed()
-    .replace(/�/g, "")
-    .replace(INVALID_XML, "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function fontFaces(fonts: EmbeddedFonts): string {
-  return [
-    `@font-face{font-family:'Fragment Mono';src:url(${fonts.mono}) format('woff2');}`,
-    `@font-face{font-family:'Schibsted Grotesk';font-weight:700;src:url(${fonts.sans}) format('woff2');}`,
-  ].join("");
-}
 
 function background(
   model: SnapshotModel,
