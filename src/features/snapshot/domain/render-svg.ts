@@ -1,6 +1,6 @@
 import { buildRidges } from "@/features/landing/lib/ridges";
 
-import type { SnapshotModel } from "./layout";
+import { FONT_SIZE, type SnapshotModel } from "./layout";
 import type { BackgroundStyle } from "./options";
 import type { SnapshotTheme } from "./themes";
 
@@ -12,6 +12,8 @@ export interface EmbeddedFonts {
 }
 
 const MONO = "'Fragment Mono', ui-monospace, monospace";
+/** Attributes for code text: set per element so the title and caption keep their own font. */
+const CODE_FONT = `font-family="${MONO}" font-size="${FONT_SIZE}" style="font-variant-ligatures:none"`;
 const SANS = "'Schibsted Grotesk', ui-sans-serif, sans-serif";
 const DIMMED_OPACITY = "0.45";
 const CARD_RADIUS = 14;
@@ -52,7 +54,7 @@ function background(
   const paths = buildRidges()
     .map((ridge) => `<path d="${ridge.d}"/>`)
     .join("");
-  return `${fill}<g data-ridges="" fill="none" stroke="${theme.accent}" stroke-width="${1.6 / scale}" opacity="0.12" transform="translate(${model.width * 0.82} ${model.height * 0.5}) scale(${scale})">${paths}</g>`;
+  return `${fill}<defs><clipPath id="snapshot-fingertip"><ellipse cx="0" cy="0" rx="128" ry="160"/></clipPath></defs><g data-ridges="" clip-path="url(#snapshot-fingertip)" fill="none" stroke="${theme.accent}" stroke-width="${1.6 / scale}" opacity="0.12" transform="translate(${model.width * 0.82} ${model.height * 0.5}) scale(${scale})">${paths}</g>`;
 }
 
 function windowBar(model: SnapshotModel, theme: SnapshotTheme): string {
@@ -82,7 +84,7 @@ function codeLines(model: SnapshotModel, theme: SnapshotTheme): string {
         ? `<rect data-highlight="${line.number}" x="0" y="${line.y}" width="${model.card.width}" height="${model.lineHeight}" fill="${theme.highlight}"/>`
         : "";
       const number = model.gutter
-        ? `<text data-number="${line.number}" x="${numberX}" y="${line.y + baseline}" text-anchor="end" fill="${theme.muted}"${opacity}>${line.number}</text>`
+        ? `<text data-number="${line.number}" x="${numberX}" y="${line.y + baseline}" text-anchor="end" ${CODE_FONT} fill="${theme.muted}"${opacity}>${line.number}</text>`
         : "";
       const spans = line.tokens
         .map((token) => {
@@ -95,7 +97,7 @@ function codeLines(model: SnapshotModel, theme: SnapshotTheme): string {
           return `<tspan x="${token.x}" fill="${token.color}"${style}>${escapeXml(token.text)}</tspan>`;
         })
         .join("");
-      return `${wash}${number}<text data-line="${line.number}" y="${line.y + baseline}" xml:space="preserve"${opacity}>${spans}</text>`;
+      return `${wash}${number}<text data-line="${line.number}" y="${line.y + baseline}" ${CODE_FONT} xml:space="preserve"${opacity}>${spans}</text>`;
     })
     .join("");
 }
@@ -107,7 +109,7 @@ export function renderSvg(
   options: { background: BackgroundStyle; fonts?: EmbeddedFonts },
 ): string {
   const { card } = model;
-  const style = `<style>${options.fonts ? fontFaces(options.fonts) : ""}text{font-family:${MONO};font-size:${model.fontSize}px;}</style>`;
+  const style = `<style>${options.fonts ? fontFaces(options.fonts) : ""}</style>`;
   const caption = model.caption
     ? `<text data-caption="" x="${model.width / 2}" y="${model.caption.y}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="15" fill="${theme.muted}">${escapeXml(model.caption.text)}</text>`
     : "";

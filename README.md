@@ -14,7 +14,7 @@ Codeprint is a toolkit for investigating code. Paste a snippet and trace it back
 | Tool            | What it does                                                                                             | Status    |
 | --------------- | -------------------------------------------------------------------------------------------------------- | --------- |
 | **Trace**       | Finds public repositories containing a snippet, even when identifiers were renamed, ranked by similarity | Available |
-| **Snapshot**    | Turns a snippet into a polished, shareable image                                                         | Phase 3   |
+| **Snapshot**    | Turns a snippet into a polished, shareable image                                                         | Available |
 | **Fingerprint** | Generates unique art from a GitHub user or repository                                                    | Phase 4   |
 | **Blueprint**   | Draws a repository's architecture as a technical blueprint                                               | Phase 5   |
 
@@ -61,6 +61,21 @@ Results stream to the page as each file is scored.
 - Similarity means "contains the same code structure", not "copied from". Trace points to where code exists; it does not judge who wrote it first.
 
 The design is in the [design document](docs/superpowers/specs/2026-10-31-codeprint-design.md) and the [Trace addendum](docs/superpowers/specs/2026-10-31-trace-design.md).
+
+## Snapshot
+
+![A Snapshot exported at LinkedIn size: a debounce function in the Latent Dark theme, one line highlighted, with a caption below.](docs/assets/snapshot-example.png)
+
+Paste code and export a polished image for a post, a README or a slide. It runs entirely in your browser, and nothing is uploaded.
+
+- **Themes:** Latent Dark, Latent Light, Cyanotype, Paper and Terminal. Every code color passes WCAG AA on its card, and a test checks it.
+- **Background:** the fingerprint ridges, a solid color, or transparent.
+- **Frame:** a window with a title, or minimal.
+- **Line numbers**, **highlighted lines** (click a line in the preview to highlight it) and a short **caption**.
+- **Size:** fit to the code, LinkedIn (1200×627) or square (1080×1080).
+- **Export:** PNG at 2×, SVG, or copy to the clipboard.
+
+The image is an SVG that Codeprint builds itself, from Shiki tokens laid out on a monospace grid, with the fonts embedded. So the preview is the exported file, the SVG stays crisp at any size, and the PNG is the same SVG drawn at twice the resolution. See [ADR 0003](docs/adr/0003-snapshot-svg-renderer.md).
 
 ## Quick start
 

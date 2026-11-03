@@ -153,6 +153,41 @@ describe("renderSvg", () => {
     expect(css).toContain("data:font/woff2;base64,BBB");
   });
 
+  it("sets code in the mono font and the title and caption in the sans font", () => {
+    const { doc } = render(sample, { title: "a.js", caption: "Hi" });
+    const css = doc.querySelector("style")!.textContent!;
+
+    // A bare `text{}` rule would beat the title's and caption's font attributes.
+    expect(css).not.toMatch(/(^|\})text\{/);
+    expect(
+      doc.querySelector('text[data-line="1"]')!.getAttribute("font-family"),
+    ).toContain("Fragment Mono");
+    for (const selector of ["[data-title]", "[data-caption]"]) {
+      expect(
+        doc.querySelector(selector)!.getAttribute("font-family"),
+      ).toContain("Schibsted Grotesk");
+    }
+  });
+
+  it("shows code exactly as typed, without ligatures", () => {
+    const { doc } = render(sample);
+
+    expect(
+      doc.querySelector('text[data-line="1"]')!.getAttribute("style"),
+    ).toContain("font-variant-ligatures:none");
+  });
+
+  it("clips the ridge motif to a fingertip outline", () => {
+    const { doc } = render(sample, { background: "ridges" });
+    const ridges = doc.querySelector("[data-ridges]")!;
+    const clip = /url\(#([\w-]+)\)/.exec(
+      ridges.getAttribute("clip-path") ?? "",
+    )?.[1];
+
+    expect(clip).toBeDefined();
+    expect(doc.querySelector(`clipPath[id="${clip}"] ellipse`)).not.toBeNull();
+  });
+
   it("scales the card for fixed sizes", () => {
     const big = Array.from({ length: 60 }, () => [
       { text: "y".repeat(100), color: "#fff" },
