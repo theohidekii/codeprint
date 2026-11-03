@@ -169,7 +169,7 @@ export function layoutPlan(
       y: height - margin - 36,
       fontSize: TITLE_SIZE,
     },
-    facts: `${analysis.modules.length} modules     ${analysis.files} files${language}`,
+    facts: `${analysis.modules.length} ${analysis.modules.length === 1 ? "module" : "modules"}     ${analysis.files} ${analysis.files === 1 ? "file" : "files"}${language}`,
     factsY: height - margin - 6,
     mark: { x: width - margin, y: height - margin - 6 },
   };

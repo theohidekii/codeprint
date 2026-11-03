@@ -50,7 +50,7 @@ export function buildEdges(
       seen.add(key);
       const back = directed.get(to)?.get(from) ?? 0;
       edges.push(
-        count >= back
+        count > back || (count === back && from < to)
           ? { from, to, weight: count + back }
           : { from: to, to: from, weight: count + back },
       );

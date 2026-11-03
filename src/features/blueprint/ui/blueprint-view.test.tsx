@@ -1,6 +1,7 @@
 import {
   fireEvent,
   render,
+  act,
   screen,
   waitFor,
   within,
@@ -161,7 +162,7 @@ describe("BlueprintView", () => {
   it("lists rooms and highlights the selected one in the plan", async () => {
     await withPlan();
     const table = screen.getByRole("table", { name: "Rooms" });
-    const row = within(table).getByRole("row", { name: /src\/ui/ });
+    const row = within(table).getByRole("row", { name: /^\d+ src\/ui/ });
 
     expect(row).toHaveTextContent("29.3 KB");
     expect(row).toHaveTextContent("10");
@@ -195,6 +196,58 @@ describe("BlueprintView", () => {
     await withPlan({ ...analysis, ...overrides });
 
     expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it("zooms the wheel only with Ctrl, so the page still scrolls", async () => {
+    await withPlan();
+    const viewport = screen.getByRole("group", { name: "Floor plan viewer" });
+
+    const scrolled = new WheelEvent("wheel", {
+      deltaY: -1,
+      bubbles: true,
+      cancelable: true,
+    });
+    viewport.dispatchEvent(scrolled);
+    expect(scrolled.defaultPrevented).toBe(false);
+    expect(viewport).toHaveAttribute("data-zoom", "1");
+
+    await act(async () => {
+      viewport.dispatchEvent(
+        new WheelEvent("wheel", {
+          deltaY: -1,
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(viewport).not.toHaveAttribute("data-zoom", "1");
+  });
+
+  it("names each room's connections and why it stands out, in text", async () => {
+    await withPlan({
+      ...analysis,
+      edges: [{ from: "src/ui", to: "src/core", weight: 2 }],
+    });
+    const table = screen.getByRole("table", { name: "Rooms" });
+
+    expect(
+      within(table).getByRole("row", { name: /^\d+ src\/ui/ }),
+    ).toHaveTextContent("src/core");
+    expect(
+      within(table).getByRole("row", { name: /largest/ }),
+    ).toHaveTextContent("src/core");
+  });
+
+  it("doesn't blame the repository when GitHub failed", async () => {
+    serve({ ...analysis, modules: [], edges: [], hotspots: [], partial: true });
+    render(<BlueprintView />);
+    await userEvent.type(input(), "o/r{Enter}");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "GitHub didn't respond",
+    );
+    expect(screen.queryByText(/No source code/)).not.toBeInTheDocument();
   });
 
   it("explains a repository with no source code", async () => {

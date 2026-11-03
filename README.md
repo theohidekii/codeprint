@@ -102,11 +102,11 @@ Enter `owner/repo` and get its architecture drawn as a floor plan.
 How to read it:
 
 - Each **room** is a module, and its size shows how much code it holds.
-- Each **small square** is a file, up to 400 per room.
+- **Small squares** stand for files, as many as fit, up to 400 per room.
 - **Pipes** join modules that import each other: thicker means more imports.
-- **Highlighted rooms** are the largest and the most connected.
+- **Highlighted rooms** are the largest, the most connected, or large and connected.
 
-It works without a token, within GitHub's limit of 60 requests per hour. Set `GITHUB_TOKEN` to raise that limit. Dependencies come from the 300 largest files, and are read for JavaScript, TypeScript and Python. See [ADR 0005](docs/adr/0005-blueprint-floor-plan.md).
+It works without a token, within GitHub's limit of 60 requests per hour. Set `GITHUB_TOKEN` to raise that limit. Dependencies come from up to 300 files, largest first in each module, and are read for JavaScript, TypeScript and Python. See [ADR 0005](docs/adr/0005-blueprint-floor-plan.md).
 
 ## Quick start
 

@@ -34,7 +34,7 @@ import { PlanViewport } from "./plan-viewport";
 
 const EXAMPLE = "vercel/swr";
 const INVALID = "Enter a repository as owner/repo.";
-const SERVER_FAILED = "GitHub didn't respond. Try again shortly.";
+const SERVER_FAILED = "GitHub didn&apos;t respond. Try again shortly.";
 const NETWORK_FAILED =
   "Couldn't reach the server. Check your connection and try again.";
 const EXPORT_FAILED = "Couldn't create the image. Try again.";
@@ -97,12 +97,14 @@ export function BlueprintView() {
           { signal: controller.signal },
         );
         const body: unknown = await response.json().catch(() => null);
-        result = response.ok
-          ? { analysis: body as Analysis }
-          : {
-              error:
-                (body as { message?: string } | null)?.message ?? SERVER_FAILED,
-            };
+        result =
+          response.ok && body
+            ? { analysis: body as Analysis }
+            : {
+                error:
+                  (body as { message?: string } | null)?.message ??
+                  SERVER_FAILED,
+              };
       } catch {
         result = { error: NETWORK_FAILED };
       }
@@ -126,12 +128,15 @@ export function BlueprintView() {
   }, [analysis, fonts, size, theme, selected]);
 
   const connections = useMemo(() => {
-    const counts = new Map<string, number>();
+    const names = new Map(analysis?.modules.map((m) => [m.id, m.name]));
+    const linked = new Map<string, string[]>();
+    const link = (id: string, other: string) =>
+      linked.set(id, [...(linked.get(id) ?? []), names.get(other) ?? other]);
     for (const { from, to } of analysis?.edges ?? []) {
-      counts.set(from, (counts.get(from) ?? 0) + 1);
-      counts.set(to, (counts.get(to) ?? 0) + 1);
+      link(from, to);
+      link(to, from);
     }
-    return counts;
+    return linked;
   }, [analysis]);
 
   const submit = (event: FormEvent) => {
@@ -212,7 +217,13 @@ export function BlueprintView() {
         </div>
       )}
 
-      {analysis?.modules.length === 0 && (
+      {analysis?.modules.length === 0 && analysis.partial && (
+        <p role="alert" className="text-danger">
+          {"GitHub didn't respond. Try again in a moment."}
+        </p>
+      )}
+
+      {analysis?.modules.length === 0 && !analysis.partial && (
         <p className="text-muted">No source code to draw in this repository.</p>
       )}
 
@@ -310,7 +321,7 @@ export function BlueprintView() {
                     Files
                   </th>
                   <th scope="col" className="py-2 font-medium">
-                    Connections
+                    Connected to
                   </th>
                 </tr>
               </thead>
@@ -331,13 +342,20 @@ export function BlueprintView() {
                       >
                         {module_.name}
                       </button>
+                      {analysis.hotspots
+                        .filter((h) => h.moduleId === module_.id)
+                        .map((h) => (
+                          <span key={h.reason} className="text-accent ml-2">
+                            {h.reason}
+                          </span>
+                        ))}
                     </td>
                     <td className="text-muted py-1.5 pr-4 whitespace-nowrap">
                       {formatBytes(module_.bytes)}
                     </td>
                     <td className="text-muted py-1.5 pr-4">{module_.files}</td>
                     <td className="text-muted py-1.5">
-                      {connections.get(module_.id) ?? 0}
+                      {connections.get(module_.id)?.join(", ") ?? "None"}
                     </td>
                   </tr>
                 ))}

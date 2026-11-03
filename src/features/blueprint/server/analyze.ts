@@ -47,6 +47,7 @@ const MAX_FILES = 300;
 const CONCURRENCY = 10;
 const MAX_FILE_BYTES = 512 * 1024;
 const REQUEST_MS = 8000;
+const MAX_PACKAGES = 50;
 const BUDGET_MS = 25_000;
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -183,6 +184,7 @@ export async function analyzeRepository(
   const tree = treeSchema.safeParse(
     treeResponse?.ok ? await treeResponse.json().catch(() => null) : null,
   );
+  if (treeResponse?.ok && !tree.success) partial = true;
   const blobs = tree.success
     ? tree.data.tree.flatMap((item) => {
         const blob = blobSchema.safeParse(item);
@@ -201,24 +203,46 @@ export async function analyzeRepository(
   const signal = deps.signal ? AbortSignal.any([deps.signal, budget]) : budget;
   const imports: { path: string; targets: string[] }[] = [];
 
+  const raw = (path: string) =>
+    (deps.fetch ?? fetch)(
+      `${RAW}/${target}/${branchPath}/${path.split("/").map(encodeURIComponent).join("/")}`,
+      { signal: AbortSignal.any([signal, AbortSignal.timeout(REQUEST_MS)]) },
+    );
+
+  const workspace = new Map<string, string>();
+  await Promise.all(
+    blobs
+      .filter((blob) => /^packages\/[^/]+\/package\.json$/.test(blob.path))
+      .slice(0, MAX_PACKAGES)
+      .map(async ({ path }) => {
+        try {
+          const response = await raw(path);
+          const name: unknown = response.ok
+            ? ((await response.json()) as { name?: unknown }).name
+            : null;
+          if (typeof name === "string")
+            workspace.set(name, path.slice(0, path.lastIndexOf("/")));
+        } catch {
+          // A package we can't name only costs its pipes.
+        }
+      }),
+  );
+
   const worker = async () => {
     while (queue.length > 0 && !signal.aborted) {
       const path = queue.shift()!;
       try {
-        const encoded = path.split("/").map(encodeURIComponent).join("/");
-        const response = await (deps.fetch ?? fetch)(
-          `${RAW}/${target}/${branchPath}/${encoded}`,
-          {
-            signal: AbortSignal.any([signal, AbortSignal.timeout(REQUEST_MS)]),
-          },
-        );
-        if (!response.ok) continue;
+        const response = await raw(path);
+        if (!response.ok) {
+          if (response.status !== 404) partial = true;
+          continue;
+        }
         const source = await response.text();
         if (source.length > MAX_FILE_BYTES || source.includes("\u0000"))
           continue;
         const specs = extractImports(source, READABLE[extension(path)]!);
         const targets = specs.flatMap((spec) => {
-          const resolved = resolveImport(path, spec, inModules);
+          const resolved = resolveImport(path, spec, inModules, workspace);
           return resolved ? [resolved] : [];
         });
         imports.push({ path, targets });

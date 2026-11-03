@@ -18,7 +18,7 @@ const PAN_STEP = 40;
 const clampZoom = (zoom: number) =>
   Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 
-/** The plan image with zoom and pan: buttons, wheel, drag, or arrow keys when focused. */
+/** The plan image with zoom and pan: buttons, Ctrl+wheel, drag, or arrow keys when focused. */
 export function PlanViewport({ alt, src }: { alt: string; src: string }) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -34,8 +34,9 @@ export function PlanViewport({ alt, src }: { alt: string; src: string }) {
   useEffect(() => {
     const element = frame.current;
     if (!element) return;
-    // React's wheel listener is passive, and zooming must not scroll the page.
+    // React's wheel listener is passive. A plain wheel stays with the page, so it can scroll.
     const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
       setZoom((z) => {
         const next = clampZoom(z * (event.deltaY < 0 ? 1.15 : 0.87));
@@ -87,7 +88,8 @@ export function PlanViewport({ alt, src }: { alt: string; src: string }) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={() => (drag.current = null)}
-        className={`border-border overflow-hidden rounded-lg border ${zoom > 1 ? "cursor-grab" : ""}`}
+        onPointerCancel={() => (drag.current = null)}
+        className={`border-border overflow-hidden rounded-lg border ${zoom > 1 ? "cursor-grab touch-none" : ""}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- a data URL isolates the SVG's styles */}
         <img

@@ -126,12 +126,28 @@ describe("extractImports", () => {
     expect(extractImports(source, "typescript")).toEqual([]);
   });
 
+  it("reads every Python import form", () => {
+    const source =
+      "from . import (\n  a,\n  b as c,\n)\nfrom pkg import sub, other\nimport x, y.z as w";
+
+    expect(extractImports(source, "python").sort()).toEqual([
+      ".a",
+      ".b",
+      "pkg",
+      "pkg.other",
+      "pkg.sub",
+      "x",
+      "y.z",
+    ]);
+  });
+
   it("finds Python imports", () => {
     const source =
       "from .a import x\nfrom . import y\nimport pkg.mod\n# import no";
 
     expect(extractImports(source, "python").sort()).toEqual([
       ".a",
+      ".a.x",
       ".y",
       "pkg.mod",
     ]);
@@ -164,12 +180,30 @@ describe("resolveImport", () => {
     ["apps/web/a.ts", "@acme/core", "packages/core/src/index.ts"],
     ["apps/web/a.ts", "ui", "packages/ui/index.ts"],
   ])("from %s, the workspace package %s is %s", (from, spec, expected) => {
-    const workspace = new Set([
+    const files = new Set([
       "packages/core/src/index.ts",
       "packages/ui/index.ts",
     ]);
+    const workspace = new Map([
+      ["@acme/core", "packages/core"],
+      ["ui", "packages/ui"],
+    ]);
 
-    expect(resolveImport(from, spec, workspace)).toBe(expected);
+    expect(resolveImport(from, spec, files, workspace)).toBe(expected);
+  });
+
+  it("doesn't mistake a third-party package for a workspace folder", () => {
+    const files = new Set(["packages/core/src/index.ts"]);
+    const workspace = new Map([["@acme/core", "packages/core"]]);
+
+    expect(resolveImport("a.ts", "@babel/core", files, workspace)).toBeNull();
+    expect(resolveImport("a.ts", "core", files, workspace)).toBeNull();
+  });
+
+  it("finds Python packages under src", () => {
+    expect(
+      resolveImport("tests/a.py", "pkg.x", new Set(["src/pkg/x.py"])),
+    ).toBe("src/pkg/x.py");
   });
 
   it.each([

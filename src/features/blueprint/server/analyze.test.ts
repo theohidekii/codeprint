@@ -33,6 +33,57 @@ function serveRepo(
 }
 
 describe("analyzeRepository", () => {
+  it("says so when files can't be read", async () => {
+    serveRepo(["src/a.ts"], () => new HttpResponse(null, { status: 429 }));
+
+    expect((await analyzeRepository("o/r", {})).partial).toBe(true);
+  });
+
+  it("doesn't count a missing file as a failure", async () => {
+    serveRepo(["src/a.ts"], () => new HttpResponse(null, { status: 404 }));
+
+    expect((await analyzeRepository("o/r", {})).partial).toBeUndefined();
+  });
+
+  it("says so when the file list is unreadable", async () => {
+    server.use(
+      http.get(API, () =>
+        HttpResponse.json({ full_name: "o/r", default_branch: "main" }),
+      ),
+      http.get(`${API}/git/trees/main`, () => HttpResponse.text("oops")),
+    );
+
+    expect((await analyzeRepository("o/r", {})).partial).toBe(true);
+  });
+
+  it("connects workspace packages by their declared names", async () => {
+    serveRepo(
+      [
+        "packages/core/package.json",
+        "packages/core/src/index.ts",
+        "packages/web/package.json",
+        "packages/web/src/index.ts",
+      ],
+      (path) => {
+        if (path === "packages/core/package.json")
+          return '{"name":"@acme/kernel"}';
+        if (path === "packages/web/package.json") return '{"name":"@acme/web"}';
+        if (path === "packages/web/src/index.ts")
+          return 'import "@acme/kernel"; import "@babel/core";';
+        return "x;";
+      },
+    );
+
+    const { edges } = await analyzeRepository("o/r", {});
+
+    expect(edges).toEqual([
+      expect.objectContaining({
+        from: "packages/web/src",
+        to: "packages/core/src",
+      }),
+    ]);
+  });
+
   it("finds modules, dependencies and hotspots", async () => {
     server.use(...blueprintHandlers);
 

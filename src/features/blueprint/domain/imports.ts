@@ -1,6 +1,9 @@
 import { tokenize } from "@/features/trace/domain/tokenize";
 import type { Language, Token } from "@/features/trace/domain/types";
 
+/** Package name to folder, for the packages of a monorepo. */
+export type Workspace = ReadonlyMap<string, string>;
+
 const JS_SUFFIXES = [
   "",
   ".ts",
@@ -52,18 +55,44 @@ function pythonImports(tokens: Token[]): string[] {
     return { text, end: i };
   };
 
+  /** The names after `from x import`, which may be in parentheses across lines. */
+  const importedNames = (start: number) => {
+    const names: string[] = [];
+    const open = tokens[start]?.text === "(";
+    const line = tokens[start]?.line;
+    let i = open ? start + 1 : start;
+    while (tokens[i] && (open || tokens[i]!.line === line)) {
+      const text = tokens[i]!.text;
+      if (text === ")") break;
+      if (text === "as") {
+        i += 2;
+        continue;
+      }
+      if (text !== "," && text !== "*") names.push(text);
+      i++;
+    }
+    return names;
+  };
+
   tokens.forEach((token, i) => {
     if (token.kind !== "keyword") return;
     if (token.text === "from" && tokens[i + 1]) {
       const { text, end } = dotted(i + 1);
-      // `from . import x` names the module after the import.
-      if (/^\.+$/.test(text) && tokens[end + 1]) {
-        specs.push(text + tokens[end + 1]!.text);
-      } else if (text) {
-        specs.push(text);
-      }
+      if (!text) return;
+      if (!/^\.+$/.test(text)) specs.push(text);
+      // `from pkg import sub` may name a module, so it's a candidate too.
+      const prefix = text.endsWith(".") ? text : `${text}.`;
+      for (const name of importedNames(end + 1)) specs.push(prefix + name);
     } else if (token.text === "import" && tokens[i - 1]?.line !== token.line) {
-      if (tokens[i + 1]) specs.push(dotted(i + 1).text);
+      let next = i + 1;
+      while (tokens[next]?.line === token.line) {
+        const { text, end } = dotted(next);
+        if (text) specs.push(text);
+        let after = end;
+        if (tokens[after]?.text === "as") after += 2;
+        if (tokens[after]?.text !== ",") break;
+        next = after + 1;
+      }
     }
   });
   return specs;
@@ -90,16 +119,19 @@ function join(base: string[], relative: string): string | null {
   return parts.join("/");
 }
 
-/** In a monorepo, packages import each other by name: `@acme/core` lives in packages/core. */
+/** In a monorepo, packages import each other by the name in their package.json. */
 function resolveWorkspacePackage(
   spec: string,
   known: ReadonlySet<string>,
+  workspace: Workspace,
 ): string | null {
-  const name = spec.startsWith("@") ? spec.split("/")[1] : spec.split("/")[0];
-  if (!name) return null;
+  const parts = spec.split("/");
+  const name = spec.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0]!;
+  const folder = workspace.get(name);
+  if (!folder) return null;
   for (const entry of ["src/index", "index"]) {
     for (const extension of [".ts", ".tsx", ".js", ".jsx"]) {
-      const candidate = `packages/${name}/${entry}${extension}`;
+      const candidate = `${folder}/${entry}${extension}`;
       if (known.has(candidate)) return candidate;
     }
   }
@@ -110,13 +142,14 @@ function resolveJs(
   fromPath: string,
   spec: string,
   known: ReadonlySet<string>,
+  workspace: Workspace,
 ): string | null {
   let target: string | null;
   if (spec.startsWith("@/")) target = join(["src"], spec.slice(2));
   else if (spec.startsWith("./") || spec.startsWith("../")) {
     target = join(fromPath.split("/").slice(0, -1), spec);
   } else {
-    return resolveWorkspacePackage(spec, known);
+    return resolveWorkspacePackage(spec, known, workspace);
   }
   if (target === null) return null;
 
@@ -147,8 +180,11 @@ function resolvePython(
   } else {
     base = rest;
   }
-  for (const candidate of [`${base}.py`, `${base}/__init__.py`]) {
-    if (known.has(candidate)) return candidate;
+  const roots = dots > 0 ? [base] : [base, `src/${base}`];
+  for (const root of roots) {
+    for (const candidate of [`${root}.py`, `${root}/__init__.py`]) {
+      if (known.has(candidate)) return candidate;
+    }
   }
   return null;
 }
@@ -158,8 +194,9 @@ export function resolveImport(
   fromPath: string,
   spec: string,
   known: ReadonlySet<string>,
+  workspace: Workspace = new Map(),
 ): string | null {
   return fromPath.endsWith(".py")
     ? resolvePython(fromPath, spec, known)
-    : resolveJs(fromPath, spec, known);
+    : resolveJs(fromPath, spec, known, workspace);
 }
